@@ -51,7 +51,7 @@ import fallback_users as users
 #----------------------------------------------------------------------
 # The 'site_XXX' module may redefine any of the above global variables.
 HOSTNAME = socket.gethostname()
-MODULENAME = "eventlist.site_%s" % HOSTNAME
+MODULENAME = "pubrefdb.site_%s" % HOSTNAME
 try:
     __import__(MODULENAME)
 except ImportError:
