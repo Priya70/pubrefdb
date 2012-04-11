@@ -1,0 +1,22 @@
+""" PubRefDb: Publication database web application.
+
+About page, describing the system software.
+"""
+
+from wrapid.json_representation import JsonRepresentation
+from wrapid.text_representation import TextRepresentation
+
+from .method_mixin import *
+from .html_representation import *
+
+
+class About(MethodMixin, GET):
+    "About page, describing the system software."
+
+    outreprs = [JsonRepresentation,
+                TextRepresentation,
+                HtmlRepresentation]
+
+    def get_data_resource(self, request):
+        return dict(resource='About',
+                    descr=open(configuration.README_FILE).read())
