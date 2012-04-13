@@ -14,7 +14,7 @@ files to the database requires login.
 
 ### RESTful interface
 
-The Adhoc web interface is RESTful, meaning that scripts can easily
+The PubRefDb web interface is RESTful, meaning that scripts can easily
 be written to access the system from other machines.
 
 ### Implementation
