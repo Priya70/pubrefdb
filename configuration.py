@@ -10,7 +10,6 @@ import socket
 import urllib
 import time
 import datetime
-import unicodedata
 
 
 DEBUG = False
@@ -21,14 +20,14 @@ HOST = dict(title='SciLifeLab tools',
 COUCHDB_SERVER   = 'http://localhost:5984/'
 COUCHDB_DATABASE = 'pubrefdb'
 
+DATA_DIR = '/var/local/pubrefdb'
+
 DATE_FORMAT     = '%Y-%m-%d'
 DAY_FORMAT      = '%A %d %B %Y'
 DATETIME_FORMAT = '%Y-%m-%d %H:%M'
 
 XDB_URL = dict(pubmed='http://www.ncbi.nlm.nih.gov/pubmed/%s',
                doi='http://dx.doi.org/%s')
-
-PUBMED_XML_URL = 'http://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id=%s&rettype=abstract'
 
 MIMETYPE_ICONS = {'application/pdf': 'pdf',
                   'application/msword': 'word',
@@ -38,9 +37,11 @@ MIMETYPE_ICONS = {'application/pdf': 'pdf',
                   'application/vnd.ms-excel': 'excel',
                   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'xls',
                   'text/plain': 'text',
+                  'text/csv': 'csv',
                   'image/png': 'image',
                   'image/gif': 'image',
-                  'image/jpeg': 'image'}
+                  'image/jpeg': 'image',
+                  'application/octet-stream': 'bin'}
 
 # Fallback user account interface; should be overriden by proper implementation
 import fallback_users as users
@@ -94,7 +95,3 @@ def get_date(value=None, format=DATE_FORMAT):
 def get_day(value=None, format=DAY_FORMAT):
     "Get the date in informal format. Use current local time if value is None."
     return get_date(value=value, format=format)
-
-def to_ascii(value):
-    "Convert any non-ASCII character to its closest equivalent."
-    return unicodedata.normalize('NFKD', value).encode('ascii', 'ignore')

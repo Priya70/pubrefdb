@@ -7,7 +7,7 @@ import wrapid
 assert wrapid.__version__ == '12.4'
 from wrapid.application import Application
 from wrapid.login import GET_Login
-from wrapid.file import GET_File
+from wrapid.file import File
 
 import pubrefdb
 from pubrefdb import configuration
@@ -30,28 +30,39 @@ application = Application(name='PubRefDb',
 # Home: most recent publications
 application.add_resource('/',
                          name='Home',
-                         GET=GET_Home)
+                         GET=Home)
 
 # Static resources; accessed often, keep at beginning of the chain.
-class StaticFile(GET_File):
+class StaticFile(File):
     "Return the specified file from a predefined server directory."
     dirpath = configuration.STATIC_DIR
 
-application.add_resource('/static/{filename:path}',
+application.add_resource('/static/{filepath:path}',
                          name='File',
                          GET=StaticFile)
 
 application.add_resource('/{iui:uuid}',
                          name='Publication',
-                         GET=Publication)
-## application.add_resource('/{iui:uuid}/edit',
-##                          name='Publication edit',
-##                          GET=GET_PublicationEdit,
-##                          POST=POST_PublicationEdit)
+                         GET=Publication,
+                         DELETE=DeletePublication)
+application.add_resource('/{iui:uuid}/slug',
+                         name='Publication slug',
+                         GET=EditPublicationSlug,
+                         POST=ModifyPublicationSlug)
+application.add_resource('/{iui:uuid}/file',
+                         name='Publication edit file',
+                         GET=EditPublicationFile,
+                         POST=ModifyPublicationFile)
+application.add_resource('/{iui:uuid}/file/{filepath:path}',
+                         name='Publication file',
+                         GET=PublicationFile)
 application.add_resource('/pubmed',
                          name='Publication import',
-                         GET=InputPublicationPubmed,
-                         POST=ImportPublicationPubmed)
+                         GET=InputPubmedPublication,
+                         POST=ImportPubmedPublication)
+application.add_resource('/pubmed/{pmid:integer}',
+                         name='Publication lookup pmid',
+                         GET=PubmedPublication)
 
 # Lists of publication
 application.add_resource('/year/{year:integer}',
@@ -68,7 +79,8 @@ application.add_resource('/search',
 
 # Edit PI list
 application.add_resource('/pilist',
-                         GET=DisplayPiList,
+                         name='PI list',
+                         GET=EditPiList,
                          POST=ModifyPiList)
 
 # Login and account resources
@@ -87,3 +99,8 @@ application.add_resource('/about',
 application.add_resource('/doc',
                          name='Documentation API',
                          GET=ApiDocumentation)
+
+# Slug-based publication lookup and redirect; must be last in this chain
+application.add_resource('/{slug:path}',
+                         name='Publication lookup slug',
+                         GET=SlugPublication)

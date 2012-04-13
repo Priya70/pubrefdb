@@ -3,19 +3,24 @@
 Home page; list of most recent publications.
 """
 
-from wrapid.json_representation import JsonRepresentation
-from wrapid.text_representation import TextRepresentation
-
 from .method_mixin import *
-from .html_representation import *
 
 
-class GET_Home(MethodMixin, GET):
+class Home(MethodMixin, GET):
     "PubRefDb home page; list of most recent publications."
 
     outreprs = [JsonRepresentation,
                 TextRepresentation,
                 PublicationsListHtmlRepresentation]
+
+    def get_data_operations(self, request):
+        ops = []
+        if self.is_login_admin():
+            ops.append(dict(title='PubMed import',
+                            href=request.application.get_url('pubmed')))
+            ops.append(dict(title='Edit PI list',
+                            href=request.application.get_url('pilist')))
+        return ops
 
     def get_data_resource(self, request):
         limit = 10
@@ -23,6 +28,7 @@ class GET_Home(MethodMixin, GET):
                                        '9999', last='0',
                                        descending=True,
                                        limit=limit)
+        # Already sorted by index
         for publication in publications:
             self.normalize_publication(publication, request.application.get_url)
         return dict(title="Publications: %i most recent" % limit,

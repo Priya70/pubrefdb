@@ -5,17 +5,25 @@ PubMed interface.
 
 import time
 import urllib
+import unicodedata
 import xml.etree.ElementTree
 
-from pubrefdb import configuration
-
-## url = "http://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=science%5bjournal%5d+AND+breast+cancer+AND+2008%5bpdat%5d"
 
 MONTHS = dict(jan=1, feb=2, mar=3, apr=4, may=5, jun=6,
               jul=7, aug=8, sep=9, oct=10, nov=11, dec=12)
 
+PUBMED_FETCH_URL = 'http://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&rettype=abstract&id=%s'
+PUBMED_SEARCH_URL = 'http://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&retmax=%s&term=%s'
+
+
+def to_ascii(value):
+    "Convert any non-ASCII character to its closest equivalent."
+    value = unicode(value)
+    return unicodedata.normalize('NFKD', value).encode('ascii', 'ignore')
+
 
 class Article(object):
+    "Fetch and parse PubMed XML for a publication given by its PMID."
 
     def __init__(self, pmid=None):
         self.title = None
@@ -29,6 +37,9 @@ class Article(object):
         if pmid:
             root = self.fetch(pmid)
             self.parse(root.find('PubmedArticle'))
+
+    def __str__(self):
+        return "Article(%s)" % self.pmid
 
     @property
     def pmid(self):
@@ -50,12 +61,8 @@ class Article(object):
 
     def fetch(self, pmid):
         "Fetch the XML from PubMed and parse into an ElementTree."
-        url = configuration.PUBMED_XML_URL % pmid
-        infile = urllib.urlopen(url)
-        data = infile.read()
-        print 'type of data', type(data)
-        data = unicode(data)
-        print 'type of data', type(data)
+        url = PUBMED_FETCH_URL % pmid
+        data = urllib.urlopen(url).read()
         return xml.etree.ElementTree.fromstring(data)
 
     def parse(self, article):
@@ -86,7 +93,7 @@ class Article(object):
                     value = unicode(value, 'utf-8')
                 key = key.lower()
                 author[key] = value
-                author[key + '_normalized'] = configuration.to_ascii(value)
+                author[key + '_normalized'] = to_ascii(value)
             if author:
                 result.append(author)
         return result
@@ -162,13 +169,49 @@ class Article(object):
         return result
 
 
-if __name__ == '__main__':
-    import json
+class Search(object):
+    "Simple search interface, producing a list of PMIDs."
 
-    url = configuration.PUBMED_XML_URL % '22375924'
-    infile = urllib.urlopen(url)
-    data = infile.read()
-    open('rosin_2012.xml', 'w').write(data)
+    def __init__(self, retmax=100):
+        self.retmax = retmax
+
+    def __call__(self, author=None, published=None, journal=None,
+                 affiliation=None, words=None):
+        parts = []
+        if author:
+            parts.append("%s[Author]" % author)
+        if published:
+            parts.append("%s[PDAT]" % published)
+        if journal:
+            parts.append("%s[Journal]" % journal)
+        if affiliation:
+            parts.append("%s[Affiliation]" % affiliation)
+        if words:
+            parts.append(words.replace(' ', '+'))
+        url = PUBMED_SEARCH_URL % (self.retmax, ' AND '.join(parts))
+        data = urllib.urlopen(url).read()
+        root = xml.etree.ElementTree.fromstring(data)
+        return [e.text for e in root.findall('IdList/Id')]
+
+
+if __name__ == '__main__':
+    search = Search()
+    pmids = search(author='Kere J',
+                   words='dyslexia')
+                   ## published='2012',
+                   ## affiliation='Karolinska Institute')
+    for pmid in pmids:
+        print pmid
+    print 'Total:', len(pmids)
+
+    ## search('(("2010"[PData - Publication] : "3000"[Date - Publication])) AND kere j[Author]')
+    ## search('(2010[PDAT] AND kere j[Author]')
+    ## search('"2010"[Date - Publication] AND kere j[Author]')
+    ## import json
+    ## url = PUBMED_FETCH_URL % '22369042'
+    ## infile = urllib.urlopen(url)
+    ## data = infile.read()
+    ## open('araujo_2012.xml', 'w').write(data)
     ## root = xml.etree.ElementTree.fromstring(open('borgstrom_2011.xml').read())
     ## root = xml.etree.ElementTree.fromstring(open('johansson_2002.xml').read())
     ## article = Article()

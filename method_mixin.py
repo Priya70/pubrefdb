@@ -4,18 +4,33 @@ Mixin class for methods: authentication and database connection.
 """
 
 import logging
+import os
 import uuid
 import time
 
 import couchdb
 
-from wrapid.fields import *
-from wrapid.responses import *
-from wrapid.methods import GET, POST, DELETE, RedirectMixin
+from wrapid.methods import *
 from wrapid.login import LoginMixin
-from wrapid.utils import now
+from wrapid.utils import now, to_ascii
+from wrapid.json_representation import JsonRepresentation
+from wrapid.text_representation import TextRepresentation
 
 from . import configuration
+from .html_representation import *
+
+
+def add_article(db, article):
+    """Add the given article as a publication to the database.
+    NOTE: It is assumed that it does not exist in the database!
+    """
+    doc = article.get_data()
+    doc['_id'] = uuid.uuid4().hex
+    doc['entitytype'] = 'publication'
+    doc['created'] = now()
+    doc['modified'] = now()
+    db.save(doc)
+    return doc
 
 
 class MethodMixin(LoginMixin):
@@ -64,6 +79,10 @@ class MethodMixin(LoginMixin):
                 raise HTTP_NOT_FOUND
             request.undo_format_specifier('account')
 
+    def set_current_publication(self, request):
+        "Set the publication to operate on."
+        self.publication = dict(self.db[request.variables['iui']])
+
     def check_access(self, realm):
         """Check that login account may access this resource.
         Raise HTTP FORBIDDEN if login user is not allowed to read this.
@@ -88,15 +107,6 @@ class MethodMixin(LoginMixin):
         if 'PubRefDb' in self.login['teams']: return True
         return False
 
-    def get_data_operations(self, request):
-        ops = []
-        if self.is_login_admin():
-            ops.append(dict(title='PubMed import',
-                            href=request.application.get_url('pubmed')))
-            ops.append(dict(title='Edit PI list',
-                            href=request.application.get_url('pilist')))
-        return ops
-
     def get_data_links(self, request):
         "Return the links response data."
         get_url = request.application.get_url
@@ -111,7 +121,8 @@ class MethodMixin(LoginMixin):
         except couchdb.http.ResourceNotFound:
             pass
         else:
-            for name in doc['names']:
+            for pi in doc['pis']:
+                name = pi['name']
                 url = get_url('author', name.replace(' ', '_'))
                 links.append(dict(title="PIs: %s" % name, href=url))
         links.append(dict(title='Documentation: About',
@@ -139,12 +150,17 @@ class MethodMixin(LoginMixin):
 
     def normalize_publication(self, publication, get_url):
         """Normalize the contents of the publication:
-        Change keys '_id' to 'iui' and '_rev' to 'rev'.
-        Add the 'href' entry, and remove the '_attachments' entry.
+        Change key '_id' to 'iui' and '_rev' to 'rev'.
+        Remove the '_attachments' entry.
+        Add the 'href' entry.
+        Add the 'alt_href' entry, if slug defined.
         Add 'href' to each author."""
         publication['iui'] = publication.pop('_id')
         publication['rev'] = publication.pop('_rev')
         publication['href'] = get_url(publication['iui'])
+        slug = publication.get('slug')
+        if slug:
+            publication['alt_href'] = get_url(slug)
         publication.pop('_attachments', None)
         for author in publication['authors']:
             try:
@@ -152,7 +168,7 @@ class MethodMixin(LoginMixin):
             except KeyError:
                 name = author['forename']
             name = name.replace(' ', '_')
-            name = configuration.to_ascii(unicode(name))
+            name = to_ascii(name)
             author['href'] = get_url('author', name)
         return publication
 
@@ -160,3 +176,15 @@ class MethodMixin(LoginMixin):
         "Sort publications by published data, descending."
         publications.sort(lambda i, j: cmp(i['published'], j['published']))
         publications.reverse()
+
+    def get_publication_files(self, iui, get_url):
+        datadir = os.path.join(configuration.DATA_DIR, iui)
+        result = []
+        pos = len(datadir) + 1
+        for dirpath, dirnames, filenames in os.walk(datadir):
+            for filename in filenames:
+                filepath = os.path.join(dirpath, filename)
+                result.append(dict(filename=filepath[pos:],
+                                   size=os.path.getsize(filepath),
+                                   href=get_url('file', filepath[pos:])))
+        return result

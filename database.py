@@ -24,6 +24,36 @@ def create_db():
     return server.create(configuration.COUCHDB_DATABASE)
 
 
+def save(db, doc):
+    "Update or create the document."
+    try:
+        doc['_rev'] = db.revisions(doc['_id']).next().rev
+    except StopIteration:
+        pass
+    db.save(doc)
+
+
+def load_pilist(db):
+    "Load the first version of the PI list."
+
+    try:
+        doc = db['pilist']
+    except couchdb.http.ResourceNotFound:
+        doc = dict(_id='pilist',
+                   entitytype='metadata',
+                   pis=[dict(name='Lundeberg J',
+                             affiliation='Royal Institute of Technology,'
+                             ' Science for Life Laboratory'),
+                        dict(name='Uhlen M',
+                             affiliation='Royal Institute of Technology,'
+                             ' Science for Life Laboratory'),
+                        dict(name='Kere J',
+                             affiliation='Karolinska Institute,'
+                             ' Karolinska Institutet,'
+                             ' Science for Life Laboratory')])
+        save(db, doc)
+
+
 def load_designs(db, root='designs'):
     for design in os.listdir(root):
         views = dict()
@@ -45,11 +75,7 @@ def load_designs(db, root='designs'):
                 key = 'map'
             views.setdefault(name, dict())[key] = code
         doc = dict(_id="_design/%s" % design, views=views)
-        try:
-            doc['_rev'] = db.revisions(doc['_id']).next().rev
-        except StopIteration:
-            pass
-        db.save(doc)
+        save(db, doc)
 
 
 if __name__ == '__main__':
@@ -58,5 +84,7 @@ if __name__ == '__main__':
     except KeyError:
         print 'Creating the database...'
         db = create_db()
+    print 'Loading PI list...'
+    load_pilist(db)
     print 'Loading design documents...'
     load_designs(db)

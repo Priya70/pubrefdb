@@ -3,11 +3,7 @@
 About page, describing the system software.
 """
 
-from wrapid.json_representation import JsonRepresentation
-from wrapid.text_representation import TextRepresentation
-
 from .method_mixin import *
-from .html_representation import *
 
 
 class About(MethodMixin, GET):

@@ -3,11 +3,7 @@
 List of publications during one year.
 """
 
-from wrapid.json_representation import JsonRepresentation
-from wrapid.text_representation import TextRepresentation
-
 from .method_mixin import *
-from .html_representation import *
 
 
 class Year(MethodMixin, GET):
@@ -22,6 +18,7 @@ class Year(MethodMixin, GET):
         publications = self.query_docs('publication/published',
                                        year + '-13', last=year,
                                        descending=True)
+        # Already sorted by index
         for publication in publications:
             self.normalize_publication(publication, request.application.get_url)
         return dict(title="Publications: %s" % year,

@@ -3,6 +3,8 @@
 General HTML representation class.
 """
 
+import logging
+
 from wrapid.html_representation import *
 
 from . import configuration
@@ -23,7 +25,7 @@ class HtmlRepresentation(BaseHtmlRepresentation):
         try:
             filename = configuration.MIMETYPE_ICONS[mimetype]
         except KeyError:
-            return mimetype
+            return ''
         else:
             return self.get_icon(filename)
 
@@ -56,10 +58,10 @@ class HtmlRepresentation(BaseHtmlRepresentation):
         return None
 
     def get_xref_link(self, xref):
-        xdb = xref['xdb'].lower()
+        xdb = xref['xdb']
         title = "%(xdb)s:%(xkey)s" % xref
         try:
-            url = configuration.XDB_URL[xdb]
+            url = configuration.XDB_URL[xdb.lower()]
         except KeyError:
             return title
         return A(title, href=url % xref['xkey'])
@@ -84,14 +86,15 @@ class PublicationsListMixin(object):
                 if link:
                     parts.append(str(link))
             table.append(TR(TD(TABLE(
-                TR(TD(A(self.get_icon('expand'), href=publication['href'])),
+                TR(TD(A(self.get_icon('information'),
+                        href=publication['href'])),
                    TH(self.safe(publication['title']))),
                 TR(TD(rowspan=2),
                    TD(self.format_authors(publication['authors']))),
                 TR(TD(', '.join(parts))),
                 klass='publication'))))
         if not len(table):
-            table.append(TR(TD(I('[no publications]'))))
+            table.append(TR(TD(I('[none]'))))
         return table
 
 

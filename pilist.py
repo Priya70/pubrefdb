@@ -3,16 +3,11 @@
 Edit list of PIs (authors for navigation menu links).
 """
 
-from wrapid.json_representation import JsonRepresentation
-from wrapid.text_representation import TextRepresentation
-
-from . import configuration
 from .method_mixin import *
-from .html_representation import *
 
 
-class DisplayPiList(MethodMixin, GET):
-    "Display PI list edit."
+class EditPiList(MethodMixin, GET):
+    "Display edit page for PI list."
 
     outreprs = [JsonRepresentation,
                 TextRepresentation,
@@ -21,10 +16,16 @@ class DisplayPiList(MethodMixin, GET):
     fields = [MultiSelectField('remove', title='PIs',
                                check=False,
                                descr='Check the PIs to remove from the list.'),
-              StringField('add', title='New PI',
-                          descr="New PI to add to list."
-                          " Specify using PubMed notation; 'Lastname IN',"
-                          " where IN are the initials.")]
+              StringField('add', title='Add PI',
+                          descr="Add or update PI in the list."
+                          " Use PubMed notation; 'Lastname IN',"
+                          " where IN are the initials, and a blank"
+                          " separates the name and initials."),
+              StringField('affiliation', title='Affiliation',
+                          length=60,
+                          descr='Affiliation of the added/updated PI.'
+                          ' A comma-separated list of affiliation strings'
+                          ' to be used for the automated reference searches.')]
 
     def is_accessible(self):
         return self.is_login_admin()
@@ -34,7 +35,10 @@ class DisplayPiList(MethodMixin, GET):
             doc = self.db['pilist']
         except couchdb.http.ResourceNotFound:
             doc = dict()
-        override = dict(remove=dict(options=doc.get('names', [])))
+        options = [dict(value=pi['name'],
+                        title="%(name)s (%(affiliation)s)" % pi)
+                   for pi in doc['pis']]
+        override = dict(remove=dict(options=options))
         return dict(title='PI list',
                     form=dict(fields=self.get_data_fields(override=override),
                               title='Edit PI list',
@@ -46,7 +50,7 @@ class DisplayPiList(MethodMixin, GET):
 class ModifyPiList(MethodMixin, RedirectMixin, POST):
     "Modify the PI list."
 
-    fields = DisplayPiList.fields
+    fields = EditPiList.fields
 
     def is_accessible(self):
         return self.is_login_admin()
@@ -55,10 +59,10 @@ class ModifyPiList(MethodMixin, RedirectMixin, POST):
         try:
             doc = self.db['pilist']
         except couchdb.http.ResourceNotFound:
-            doc = None
-            names = []
-        else:
-            names = doc['names']
+            doc = dict(_id='pilist',
+                       entitytype='metadata',
+                       pis=[])
+        pis = dict([(pi['name'], pi['affiliation']) for pi in doc['pis']])
         values = self.parse_fields(request)
         try:
             remove = values['remove']
@@ -67,13 +71,11 @@ class ModifyPiList(MethodMixin, RedirectMixin, POST):
             pass
         else:
             for name in remove:
-                name = configuration.to_ascii(unicode(name))
-                name = name.lower()
-                for i, pi in enumerate(names):
-                    if pi is None: continue
-                    if pi.lower() == name:
-                        names[i] = None
-            names = [n for n in names if n is not None]
+                name = to_ascii(name)
+                try:
+                    del pis[name]
+                except KeyError:
+                    pass
         try:
             name = values['add']
             if not name: raise KeyError
@@ -82,15 +84,10 @@ class ModifyPiList(MethodMixin, RedirectMixin, POST):
         except KeyError:
             pass
         else:
-            name = configuration.to_ascii(unicode(name))
-            if name not in names:
-                names.append(name)
-        names.sort()
-        if doc:
-            doc['names'] = names
-        else:
-            doc = dict(_id='pilist',
-                       entitytype='metadata',
-                       names=names)
+            name = to_ascii(name)
+            affiliation = values.get('affiliation') or ''
+            pis[name] = affiliation.strip()
+        keys = sorted(pis.keys())
+        doc['pis'] = [dict(name=key, affiliation=pis[key]) for key in keys]
         self.db.save(doc)
         self.set_redirect(request.get_url())

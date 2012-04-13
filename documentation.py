@@ -4,12 +4,8 @@ Produce the documentation for the web resource API by introspection.
 """
 
 from wrapid.documentation import *
-from wrapid.json_representation import JsonRepresentation
-from wrapid.text_representation import TextRepresentation
 
-from . import configuration
-from .html_representation import *
-from .method_mixin import MethodMixin
+from .method_mixin import *
 
 
 class ApiDocumentationHtmlRepresentation(ApiDocumentationHtmlMixin,

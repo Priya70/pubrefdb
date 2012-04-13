@@ -1,8 +1,8 @@
-/* PubListMan: Publication database web application.
+/* PubRefDb: Publication database web application.
    Index publication documents by author.
    Value: null. */
 function(doc) {
-    if (!doc.entitytype == 'publication') return;
+    if (doc.entitytype !== 'publication') return;
     var author, name;
     for (var i in doc.authors) {
 	au = doc.authors[i];
