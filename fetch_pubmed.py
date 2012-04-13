@@ -1,10 +1,7 @@
 """ PubRefDb: Publication database web application.
 
-Search PubMed for new publications and load; loop through PIs in the database.
+Search and load publications from PubMed; loop through PIs in the database.
 """
-
-import logging
-import time
 
 from pubrefdb import pubmed
 from pubrefdb.database import get_db
@@ -34,11 +31,19 @@ def add_publication(db, pmid):
 
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG)
+    import sys
+    import time
     year = time.localtime().tm_year
     years = range(year-2, year+1)
     db = get_db()
     pis = db['pilist']['pis']
+    # If any names given on command line, then check only those
+    names = set([a.lower().replace('_', ' ') for a in sys.argv[1:]])
+    if names:
+        for i, pi in enumerate(pis):
+            if pi['name'].lower() not in names:
+                pis[i] = None
+        pis = [pi for pi in pis if pi is not None]
     pis = [(pi['name'], [a.strip() for a in pi['affiliation'].split(',')])
            for pi in pis]
     for pi, affiliations in pis:
@@ -48,4 +53,4 @@ if __name__ == '__main__':
         for pmid in pmids:
             if add_publication(db, pmid):
                 count_new += 1
-        logging.debug("%s: %i found, %i new", pi, count_all, count_new)
+        print pi, ':', count_all, 'found,', count_new, 'added'

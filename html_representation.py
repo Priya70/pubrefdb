@@ -50,52 +50,62 @@ class HtmlRepresentation(BaseHtmlRepresentation):
                                   journal['issue'] or '-',
                                   journal['pages'] or '-')
 
-    def get_xdb_link(self, publication, xdb):
+    def get_xdb_link(self, publication, xdb, title=None, icon=None):
         xdb = xdb.lower()
         for xref in publication['xrefs']:
             if xref['xdb'].lower() == xdb:
-                return self.get_xref_link(xref)
+                return self.get_xref_link(xref, title=title, icon=icon)
         return None
 
-    def get_xref_link(self, xref):
+    def get_xref_link(self, xref, title=None, icon=None):
         xdb = xref['xdb']
-        title = "%(xdb)s:%(xkey)s" % xref
+        if not title:
+            title = "%(xdb)s:%(xkey)s" % xref
         try:
             url = configuration.XDB_URL[xdb.lower()]
         except KeyError:
             return title
-        return A(title, href=url % xref['xkey'])
-        
+        url = url  % xref['xkey']
+        if icon:
+            return A(self.get_icon(icon), title, href=url)
+        else:
+            return A(title, href=url)
 
 
 class PublicationsListMixin(object):
     "Mixin to display list of publications."
 
     def get_publications_list(self):
-        table = TABLE()
+        rows = []
         for publication in self.data['publications']:
-            parts = []
+            details = []
             journal = publication.get('journal')
             if journal:
-                parts.append(self.format_journal(journal))
+                details.append(self.format_journal(journal))
             published = publication.get('published')
             if published:
-                parts.append(published)
-            for xdb in ['pubmed', 'doi']:
-                link = self.get_xdb_link(publication, xdb)
-                if link:
-                    parts.append(str(link))
-            table.append(TR(TD(TABLE(
+                details.append(published)
+            links = []
+            link = self.get_xdb_link(publication, 'pubmed',
+                                     title='PubMed', icon='pubmed')
+            if link:
+                links.append(str(link))
+            link = self.get_xdb_link(publication, 'doi',
+                                     title='Article', icon='xref')
+            if link:
+                links.append(str(link))
+            rows.append(TR(TD(TABLE(
                 TR(TD(A(self.get_icon('information'),
                         href=publication['href'])),
-                   TH(self.safe(publication['title']))),
+                   TD(B(self.safe(publication['title'])),
+                      ' ',
+                      ' '.join(links))),
                 TR(TD(rowspan=2),
                    TD(self.format_authors(publication['authors']))),
-                TR(TD(', '.join(parts))),
+                TR(TD(', '.join(details))),
                 klass='publication'))))
-        if not len(table):
-            table.append(TR(TD(I('[none]'))))
-        return table
+        rows.insert(0, TD(I("%s publications" % len(rows))))
+        return TABLE(*rows)
 
 
 class PublicationsListHtmlRepresentation(PublicationsListMixin,
