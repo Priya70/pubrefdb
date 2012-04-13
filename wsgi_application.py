@@ -6,7 +6,7 @@ Apache WSGI interface using the 'wrapid' package.
 import wrapid
 assert wrapid.__version__ == '12.4'
 from wrapid.application import Application
-from wrapid.login import GET_Login
+from wrapid.login import Login
 from wrapid.file import File
 
 import pubrefdb
@@ -84,7 +84,7 @@ application.add_resource('/pilist',
                          POST=ModifyPiList)
 
 # Login and account resources
-class LoginAccount(GET_Login):
+class LoginAccount(Login):
     "Perform login to an account. Basic Authentication."
     def get_account(self, name, password):
         return configuration.users.get_account(name, password)
