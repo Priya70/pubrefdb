@@ -25,7 +25,10 @@ class EditPiList(MethodMixin, GET):
                           length=60,
                           descr='Affiliation of the added/updated PI.'
                           ' A comma-separated list of affiliation strings'
-                          ' to be used for the automated reference searches.')]
+                          ' to be used for the automated reference searches.'),
+              HiddenField('rev',
+                          required=True,
+                          descr='Couchdb document revision')]
 
     def is_accessible(self):
         return self.is_login_admin()
@@ -39,9 +42,11 @@ class EditPiList(MethodMixin, GET):
                         title="%(name)s (%(affiliation)s)" % pi)
                    for pi in doc['pis']]
         override = dict(remove=dict(options=options))
+        values = dict(rev=doc.get('_rev'))
         return dict(title='PI list',
-                    form=dict(fields=self.get_data_fields(override=override),
-                              title='Edit PI list',
+                    form=dict(title='Edit PI list',
+                              fields=self.get_data_fields(override=override),
+                              values=values,
                               label='Save',
                               href=request.get_url(),
                               cancel=request.application.get_url()))
@@ -59,11 +64,13 @@ class ModifyPiList(MethodMixin, RedirectMixin, POST):
         try:
             doc = self.db['pilist']
         except couchdb.http.ResourceNotFound:
-            doc = dict(_id='pilist',
-                       entitytype='metadata',
-                       pis=[])
+            doc = dict(pis=[])
         pis = dict([(pi['name'], pi['affiliation']) for pi in doc['pis']])
         values = self.parse_fields(request)
+        try:
+            saver = MetadataSaver(self.db, doc=doc, values=values)
+        except ValueError, msg:
+            raise HTTP_BAD_REQUEST(str(msg))
         try:
             remove = values['remove']
             if not remove: raise KeyError
@@ -87,7 +94,7 @@ class ModifyPiList(MethodMixin, RedirectMixin, POST):
             name = to_ascii(name)
             affiliation = values.get('affiliation') or ''
             pis[name] = affiliation.strip()
-        keys = sorted(pis.keys())
-        doc['pis'] = [dict(name=key, affiliation=pis[key]) for key in keys]
-        self.db.save(doc)
+        with saver:
+            doc['pis'] = [dict(name=key, affiliation=pis[key])
+                          for key in sorted(pis.keys())]
         self.set_redirect(request.get_url())

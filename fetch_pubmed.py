@@ -5,12 +5,12 @@ Search and load publications from PubMed; loop through PIs in the database.
 
 from pubrefdb import pubmed
 from pubrefdb.database import get_db
-from pubrefdb.method_mixin import add_article
+from pubrefdb.method_mixin import PublicationSaver
 
 
-def fetch_pi_pmids(db, pi, years, affiliations):
+def fetch_pmids(db, pi, years, affiliations):
     """Get the PMIDs for publications involving the given PI
-    at the given affiliations, for the specified years.
+    at the given affiliations for the specified years.
     Remove thos PMIDs which already exist in the database.
     """
     pmids = set()
@@ -23,11 +23,14 @@ def fetch_pi_pmids(db, pi, years, affiliations):
     return sorted(pmids)
 
 def add_publication(db, pmid):
+    "Add the publication to the database if not already in it."
     view = db.view('publication/pmid')
     if len(view[pmid]) > 0: return
     article = pubmed.Article(pmid)
     if not article.pmid: return
-    return add_article(db, article)
+    with PublicationSaver(db, doc=article.get_data()) as doc:
+        pass
+    return doc
 
 
 if __name__ == '__main__':
@@ -47,7 +50,7 @@ if __name__ == '__main__':
     pis = [(pi['name'], [a.strip() for a in pi['affiliation'].split(',')])
            for pi in pis]
     for pi, affiliations in pis:
-        pmids = fetch_pi_pmids(db, pi, years, affiliations)
+        pmids = fetch_pmids(db, pi, years, affiliations)
         count_all = len(pmids)
         count_new = 0
         for pmid in pmids:

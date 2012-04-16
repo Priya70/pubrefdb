@@ -135,14 +135,22 @@ class Article(object):
         date = []
         if elem:
             date = self.get_date(elem)
-        if len(date) < 3:               # Fallback 1: epublish date
-            for elem in article.findall('PubmedData/History/PubMedPubDate'):
-                if elem.get('PubStatus') == 'epublish':
-                    date = self.get_date(elem)
-                    break
-        if len(date) < 3:               # Fallback 2: today's date
-            date = time.localtime()
-            date = [date.tm_year, date.tm_mon, date.tm_mday]
+        if len(date) < 2:               # Fallback 1: PubMedPubDate
+            dates = article.findall('PubmedData/History/PubMedPubDate')
+            for status in ['epublish', 'aheadofprint', 'pubmed', 'entrez']:
+                for elem in dates:
+                    if elem.get('PubStatus') == status:
+                        date = self.get_date(elem)
+                        break
+                if len(date) >= 2: break
+        if len(date) == 0:              # Fallback 2: today's year and month
+            d = time.localtime()
+            date = [d.tm_year, d.tm_mon, 0]
+        elif len(date) == 1:            # Add today's month
+            d = time.localtime()
+            date = [date[0], d.tm_mon, 0]
+        elif len(date) == 2:            # Add dummy day
+            date.append(0)
         return "%s-%02i-%02i" % tuple(date)
 
     def get_date(self, element):
@@ -194,7 +202,7 @@ class Search(object):
         return [e.text for e in root.findall('IdList/Id')]
 
 
-if __name__ == '__main__':
+def test1():
     search = Search()
     pmids = search(author='Kere J',
                    words='dyslexia')
@@ -204,14 +212,18 @@ if __name__ == '__main__':
         print pmid
     print 'Total:', len(pmids)
 
-    ## search('(("2010"[PData - Publication] : "3000"[Date - Publication])) AND kere j[Author]')
-    ## search('(2010[PDAT] AND kere j[Author]')
-    ## search('"2010"[Date - Publication] AND kere j[Author]')
-    ## import json
-    ## url = PUBMED_FETCH_URL % '22369042'
-    ## infile = urllib.urlopen(url)
-    ## data = infile.read()
-    ## open('araujo_2012.xml', 'w').write(data)
+def test2():
+    search('(("2010"[PData - Publication] : "3000"[Date - Publication])) AND kere j[Author]')
+    search('(2010[PDAT] AND kere j[Author]')
+    search('"2010"[Date - Publication] AND kere j[Author]')
+
+
+if __name__ == '__main__':
+    import json
+    url = PUBMED_FETCH_URL % '21062454'
+    infile = urllib.urlopen(url)
+    data = infile.read()
+    open('li_2012.xml', 'w').write(data)
     ## root = xml.etree.ElementTree.fromstring(open('borgstrom_2011.xml').read())
     ## root = xml.etree.ElementTree.fromstring(open('johansson_2002.xml').read())
     ## article = Article()

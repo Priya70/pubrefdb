@@ -31,6 +31,6 @@ class Home(MethodMixin, GET):
         # Already sorted by index
         for publication in publications:
             self.normalize_publication(publication, request.application.get_url)
-        return dict(title="Publications: %i most recent" % limit,
+        return dict(title='SciLifeLab recent publications',
                     resource='Home',
                     publications=publications)

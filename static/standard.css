@@ -131,7 +131,7 @@ form .descr { font-style: italic; }
 
 table.output th {vertical-align: top;
                  text-align: right;
-                    white-space: nowrap; }
+                 white-space: nowrap; }
 table.output td {vertical-align: top;
                  border-style: solid;
                  border-width: 1px;
@@ -176,6 +176,8 @@ table.details th {vertical-align: top;
                   white-space: nowrap; }
 table.details td {vertical-align: top;
                   padding-left: 0.5em; }
+
+a.xref {white-space: nowrap; }
 
 span.current { border-style: solid;
                border-color: black;

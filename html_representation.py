@@ -67,15 +67,15 @@ class HtmlRepresentation(BaseHtmlRepresentation):
             return title
         url = url  % xref['xkey']
         if icon:
-            return A(self.get_icon(icon), title, href=url)
+            return A(self.get_icon(icon), title, href=url, klass='xref')
         else:
-            return A(title, href=url)
+            return A(title, href=url, klass='xref')
 
 
 class PublicationsListMixin(object):
     "Mixin to display list of publications."
 
-    def get_publications_list(self):
+    def get_publications_list(self, count=True):
         rows = []
         for publication in self.data['publications']:
             details = []
@@ -104,7 +104,8 @@ class PublicationsListMixin(object):
                    TD(self.format_authors(publication['authors']))),
                 TR(TD(', '.join(details))),
                 klass='publication'))))
-        rows.insert(0, TD(I("%s publications" % len(rows))))
+        if count:
+            rows.insert(0, TD(I("%s publications" % len(rows))))
         return TABLE(*rows)
 
 

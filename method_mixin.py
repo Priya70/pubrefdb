@@ -20,17 +20,48 @@ from . import configuration
 from .html_representation import *
 
 
-def add_article(db, article):
-    """Add the given article as a publication to the database.
-    NOTE: It is assumed that it does not exist in the database!
-    """
-    doc = article.get_data()
-    doc['_id'] = uuid.uuid4().hex
-    doc['entitytype'] = 'publication'
-    doc['created'] = now()
-    doc['modified'] = now()
-    db.save(doc)
-    return doc
+class DocumentSaver(object):
+    "Context handler saving (update or create) a document in the database."
+
+    # Must be specified by inheriting class
+    entitytype = None
+
+    def __init__(self, db, doc=dict(), values=dict()):
+        assert self.entitytype
+        self.db = db
+        self.doc = doc
+        if self.doc.has_key('_id'):     # Doc exists in the database
+            try:
+                rev = values.get('_rev', values['rev'])
+                if rev != self.doc['_rev']:
+                    raise ValueError('document revision mismatch;'
+                                     ' someone else has edited the document')
+            except KeyError:
+                raise ValueError('document revision missing')
+        else:
+            self.doc['_id'] = uuid.uuid4().hex
+            self.doc['entitytype'] = self.entitytype
+            self.doc['created'] = now()
+
+    def __enter__(self):
+        return self.doc
+
+    def __exit__(self, type, value, tb):
+        if type is not None: return False # No exceptions handled here
+        self.doc['modified'] = now()
+        self.db.save(self.doc)
+
+    def update(self, data):
+        self.doc.update(data)
+
+
+class PublicationSaver(DocumentSaver):
+    "Context handler saving a publication document in the database."
+    entitytype = 'publication'
+
+class MetadataSaver(DocumentSaver):
+    "Context handler saving a metadata document in the database."
+    entitytype = 'metadata'
 
 
 class MethodMixin(LoginMixin):

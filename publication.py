@@ -20,13 +20,17 @@ class PublicationHtmlRepresentation(HtmlRepresentation):
     def get_content(self):
         table = TABLE(TR(TH('Authors'),
                          TD(self.format_authors(self.data['authors']))),
-                      TR(TH('Published'),
-                         TD(self.data['published'])),
                       klass='details')
         journal = self.data.get('journal')
         if journal:
             table.append(TR(TH('Journal'),
                             TD(self.format_journal(journal))))
+        table.append(TR(TH('Published'),
+                        TD(self.data['published'])))
+        affiliation = self.data.get('affiliation')
+        if affiliation:
+            table.append(TR(TH('Affiliation'),
+                            TD(affiliation)))
         abstract = self.data.get('abstract')
         if abstract:
             table.append(TR(TH('Abstract'),
@@ -153,9 +157,10 @@ class ModifyPublicationSlug(MethodMixin, RedirectMixin, POST):
 
     def process(self, request):
         values = self.parse_fields(request)
-        if self.publication['_rev'] != values.get('rev'):
-            raise HTTP_BAD_REQUEST('publication entry revision mismatch;'
-                                   ' it has been edited by someone else')
+        try:
+            saver = PublicationSaver(self.db, self.publication, values)
+        except ValueError, msg:
+            raise HTTP_BAD_REQUEST(str(msg))
         slug = values.get('slug')
         if slug:
             slug = slug.strip()
@@ -168,8 +173,8 @@ class ModifyPublicationSlug(MethodMixin, RedirectMixin, POST):
                     raise HTTP_CONFLICT("slug '%s' already in use")
             else:
                 slug = None
-            self.publication['slug'] = slug
-            self.db.save(self.publication)
+            with saver:
+                self.publication['slug'] = slug
         self.set_redirect(request.application.get_url(self.publication['_id']))
 
 
@@ -297,8 +302,9 @@ class ImportPubmedPublication(MethodMixin, RedirectMixin, POST):
             article = pubmed.Article(pmid)
             if not article.pmid:
                 raise HTTP_BAD_REQUEST("no article with PMID %s" % pmid)
-            doc = add_article(self.db, article)
-            iui = doc['_id']
+            with PublicationSaver(self.db) as ps:
+                ps.update(article.get_data())
+                iui = ps.doc['_id']
         self.set_redirect(request.application.get_url(iui))
 
 
