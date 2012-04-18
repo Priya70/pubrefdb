@@ -30,6 +30,7 @@ class HtmlRepresentation(BaseHtmlRepresentation):
             return self.get_icon(filename)
 
     def format_authors(self, authors):
+        if not authors: return '-'
         result = []
         for author in authors:
             try:
@@ -45,10 +46,15 @@ class HtmlRepresentation(BaseHtmlRepresentation):
         return ', '.join(result)
 
     def format_journal(self, journal):
+        if not journal: return '-'
         return "%s %s (%s) %s" % (journal['abbreviation'] or journal['title'],
                                   B(journal['volume'] or '-'),
                                   journal['issue'] or '-',
                                   journal['pages'] or '-')
+
+    def format_tags(self, tags):
+        if not tags: return '-'
+        return ', '.join(tags)
 
     def get_xdb_link(self, publication, xdb, title=None, icon=None):
         xdb = xdb.lower()

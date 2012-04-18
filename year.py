@@ -15,10 +15,10 @@ class Year(MethodMixin, GET):
 
     def get_data_resource(self, request):
         year = request.variables['year']
-        publications = self.query_docs('publication/published',
-                                       year + '-13', last=year,
-                                       descending=True)
-        # Already sorted by index
+        publications = self.get_docs('publication/published',
+                                     year + '-13', last=year,
+                                     descending=True)
+        # Already sorted by the index
         for publication in publications:
             self.normalize_publication(publication, request.application.get_url)
         return dict(title="Publications: %s" % year,

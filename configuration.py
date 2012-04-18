@@ -11,6 +11,8 @@ import urllib
 import time
 import datetime
 
+import couchdb
+
 
 DEBUG = False
 
@@ -74,6 +76,15 @@ SOURCE_DIR = os.path.dirname(__file__)
 STATIC_DIR = os.path.join(SOURCE_DIR, 'static')
 
 README_FILE = os.path.join(SOURCE_DIR, 'README.md')
+
+
+def get_db():
+    "Get an opened database interface instance."
+    server = couchdb.Server(COUCHDB_SERVER)
+    try:
+        return server[COUCHDB_DATABASE]
+    except couchdb.http.ResourceNotFound:
+        raise KeyError('database does not exist')
 
 def get_date(value=None, format=DATE_FORMAT):
     "Get the date in ISO format. Use current local time if value is None."

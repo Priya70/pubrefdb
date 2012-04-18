@@ -12,6 +12,7 @@ from wrapid.file import File
 from .method_mixin import *
 from pubrefdb import pubmed
 from pubrefdb import mimeutils
+from .database import PublicationSaver
 
 
 class PublicationHtmlRepresentation(HtmlRepresentation):
@@ -20,21 +21,17 @@ class PublicationHtmlRepresentation(HtmlRepresentation):
     def get_content(self):
         table = TABLE(TR(TH('Authors'),
                          TD(self.format_authors(self.data['authors']))),
+                      TR(TH('Journal'),
+                         TD(self.format_journal(self.data.get('journal')))),
+                      TR(TH('Published'),
+                         TD(self.data.get('published') or '-')),
+                      TR(TH('Affiliation'),
+                         TD(self.data.get('affiliation') or '-')),
+                      TR(TH('Abstract'),
+                         TD(self.data.get('abstract') or '-')),
+                      TR(TH('Tags'),
+                         TD(self.format_tags(self.data.get('tags')))),
                       klass='details')
-        journal = self.data.get('journal')
-        if journal:
-            table.append(TR(TH('Journal'),
-                            TD(self.format_journal(journal))))
-        table.append(TR(TH('Published'),
-                        TD(self.data['published'])))
-        affiliation = self.data.get('affiliation')
-        if affiliation:
-            table.append(TR(TH('Affiliation'),
-                            TD(affiliation)))
-        abstract = self.data.get('abstract')
-        if abstract:
-            table.append(TR(TH('Abstract'),
-                            TD(abstract)))
         url = self.data.get('alt_href')
         if url:
             table.append(TR(TH('Slug URL'),
@@ -49,7 +46,7 @@ class PublicationHtmlRepresentation(HtmlRepresentation):
                                 TD("%(size)s bytes" % file, klass='integer'),
                                 TD(A(file['filename'], href=file['href']))))
         if len(filetable) == 0:
-            filetable.append(TR(TD(I('[none]'))))
+            filetable.append(TR(TD('-')))
         table.append(TR(TH('Files'),
                         TD(filetable)))
         return table
@@ -66,6 +63,7 @@ class Publication(MethodMixin, GET):
 
     outreprs = [JsonRepresentation,
                 TextRepresentation,
+                ## XmlRepresentation,
                 PublicationHtmlRepresentation]
 
     def set_current(self, request):
@@ -76,6 +74,8 @@ class Publication(MethodMixin, GET):
     def get_data_operations(self, request):
         ops = super(Publication, self).get_data_operations(request)
         if self.is_login_admin():
+            ops.append(dict(title='Edit tags',
+                            href=request.get_url('tags')))
             ops.append(dict(title='Edit slug',
                             href=request.get_url('slug')))
             ops.append(dict(title='Edit files',
@@ -107,6 +107,72 @@ class DeletePublication(MethodMixin, RedirectMixin, DELETE):
                       ignore_errors=True)
         del self.db[iui]
         self.set_redirect(request.application.url)
+
+
+class EditPublicationTags(MethodMixin, GET):
+    "Display edit form for the tags of a publication."
+
+    outreprs = [JsonRepresentation,
+                TextRepresentation,
+                FormHtmlRepresentation]
+
+    fields = [MultiSelectField('tags', title='Tags',
+                               check=False,
+                               descr='Select tags to apply.'),
+              StringField('add', title='Add',
+                          descr='Add a new tag.'),
+              HiddenField('rev',
+                          required=True,
+                          descr='Couchdb document revision')]
+
+    def is_accessible(self):
+        "Is the login user allowed to access this method of the resource?"
+        return self.is_login_admin()
+
+    def set_current(self, request):
+        self.set_current_publication(request)
+
+    def get_data_resource(self, request):
+        view = self.db.view('publication/tags', group=True)
+        override = dict(tags=dict(options=[v.key for v in view]))
+        values = dict(rev=self.publication.get('_rev'),
+                      tags=self.publication.get('tags') or [])
+        cancel = request.application.get_url(self.publication['_id'])
+        return dict(title="Edit tags for '%s'" % self.publication['title'],
+                    form=dict(title='Edit publication slug',
+                              fields=self.get_data_fields(override=override),
+                              values=values,
+                              label='Save',
+                              href=request.url,
+                              cancel=cancel))
+
+
+class ModifyPublicationTags(MethodMixin, RedirectMixin, POST):
+    "Modify the tags of the publication."
+
+    fields = EditPublicationTags.fields
+
+    def is_accessible(self):
+        "Is the login user allowed to access this method of the resource?"
+        return self.is_login_admin()
+
+    def set_current(self, request):
+        self.set_current_publication(request)
+
+    def process(self, request):
+        values = self.parse_fields(request)
+        try:
+            saver = PublicationSaver(self.db, self.publication, values)
+        except ValueError, msg:
+            raise HTTP_BAD_REQUEST(str(msg))
+        tags = values.get('tags') or []
+        tag = values.get('add')
+        if tag:
+            if tag not in tags:
+                tags.append(tag)
+        with saver:
+            self.publication['tags'] = tags
+        self.set_redirect(request.application.get_url(self.publication['_id']))
 
 
 class EditPublicationSlug(MethodMixin, GET):
@@ -169,7 +235,7 @@ class ModifyPublicationSlug(MethodMixin, RedirectMixin, POST):
         if slug != self.publication.get('slug'):
             if slug:
                 # Check if slug already defined for other publication
-                if self.query_docs('publication/slug', slug):
+                if self.get_docs('publication/slug', slug):
                     raise HTTP_CONFLICT("slug '%s' already in use")
             else:
                 slug = None

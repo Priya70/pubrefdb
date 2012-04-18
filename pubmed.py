@@ -34,6 +34,7 @@ class Article(object):
         self.abstract = None
         self.xrefs = []
         self.hrefs = []
+        self.tags = []
         if pmid:
             root = self.fetch(pmid)
             self.parse(root.find('PubmedArticle'))
@@ -57,7 +58,8 @@ class Article(object):
                     published=self.published,
                     abstract= self.abstract,
                     xrefs=self.xrefs,
-                    hrefs=self.hrefs)
+                    hrefs=self.hrefs,
+                    tags=self.tags)
 
     def fetch(self, pmid):
         "Fetch the XML from PubMed and parse into an ElementTree."
@@ -65,10 +67,10 @@ class Article(object):
         data = urllib.urlopen(url).read()
         return xml.etree.ElementTree.fromstring(data)
 
-    def parse(self, article):
+    def parse(self, tree):
         "Parse the XML tree for the article information."
-        if article is None: return
-        element = article.find('MedlineCitation/Article')
+        if tree is None: return
+        element = tree.find('MedlineCitation/Article')
         if not element:
             raise ValueError('invalid XML')
         self.title = element.findtext('ArticleTitle') or '[no title]'
@@ -76,10 +78,10 @@ class Article(object):
         self.affiliation = element.findtext('Affiliation') or None
         self.journal = self.get_journal(element)
         self.abstract = self.get_abstract(element)
-        self.published = self.get_published(article)
-        self.xrefs = self.get_xrefs(article)
+        self.published = self.get_published(tree)
+        self.xrefs = self.get_xrefs(tree)
         if self.pmid is None:
-            pmid = article.findtext('MedlineCitation/PMID')
+            pmid = tree.findtext('MedlineCitation/PMID')
             self.xrefs.append(dict(xdb='pubmed', xkey=pmid))
 
     def get_authors(self, authorlist):
@@ -187,13 +189,13 @@ class Search(object):
                  affiliation=None, words=None):
         parts = []
         if author:
-            parts.append("%s[Author]" % author)
+            parts.append("%s[Author]" % to_ascii(author))
         if published:
             parts.append("%s[PDAT]" % published)
         if journal:
             parts.append("%s[Journal]" % journal)
         if affiliation:
-            parts.append("%s[Affiliation]" % affiliation)
+            parts.append("%s[Affiliation]" % to_ascii(affiliation))
         if words:
             parts.append(words.replace(' ', '+'))
         url = PUBMED_SEARCH_URL % (self.retmax, ' AND '.join(parts))
@@ -219,11 +221,11 @@ def test2():
 
 
 if __name__ == '__main__':
-    import json
-    url = PUBMED_FETCH_URL % '21062454'
+    url = PUBMED_FETCH_URL % '22275472'
     infile = urllib.urlopen(url)
     data = infile.read()
-    open('li_2012.xml', 'w').write(data)
+    open('sofiadis_2012.xml', 'w').write(data)
+    ## import json
     ## root = xml.etree.ElementTree.fromstring(open('borgstrom_2011.xml').read())
     ## root = xml.etree.ElementTree.fromstring(open('johansson_2002.xml').read())
     ## article = Article()

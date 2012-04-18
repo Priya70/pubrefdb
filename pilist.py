@@ -4,6 +4,7 @@ Edit list of PIs (authors for navigation menu links).
 """
 
 from .method_mixin import *
+from .database import MetadataSaver
 
 
 class EditPiList(MethodMixin, GET):

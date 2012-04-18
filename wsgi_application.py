@@ -15,6 +15,8 @@ from pubrefdb.home import *
 from pubrefdb.publication import *
 from pubrefdb.year import *
 from pubrefdb.author import *
+from pubrefdb.journal import *
+from pubrefdb.tag import *
 from pubrefdb.pilist import *
 from pubrefdb.search import *
 from pubrefdb.about import *
@@ -45,6 +47,10 @@ application.add_resource('/{iui:uuid}',
                          name='Publication',
                          GET=Publication,
                          DELETE=DeletePublication)
+application.add_resource('/{iui:uuid}/tags',
+                         name='Publication tags',
+                         GET=EditPublicationTags,
+                         POST=ModifyPublicationTags)
 application.add_resource('/{iui:uuid}/slug',
                          name='Publication slug',
                          GET=EditPublicationSlug,
@@ -71,6 +77,12 @@ application.add_resource('/year/{year:integer}',
 application.add_resource('/author/{author}',
                          name='Publication list author',
                          GET=Author)
+application.add_resource('/journals',
+                         name='Journal list',
+                         GET=Journals)
+application.add_resource('/tag/{tag}',
+                         name='Publication list tag',
+                         GET=Tag)
 
 # Other resources
 application.add_resource('/search',

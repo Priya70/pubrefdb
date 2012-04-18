@@ -1,9 +1,11 @@
 /* PubRefDb: Publication database web application.
-   Index publication documents by slug.
+   Index publication documents by tag.
    Value: null.
 */
 function(doc) {
     if (doc.entitytype !== 'publication') return;
-    if (!doc.slug) return;
-    emit(doc.slug, null);
+    if (!doc.tags) return;
+    for (var i in doc.tags) {
+	emit(doc.tags[i], null);
+    }
 }

@@ -1,6 +1,7 @@
 /* PubRefDb: Publication database web application.
    Index publication documents by author.
-   Value: null. */
+   Value: null.
+*/
 function(doc) {
     if (doc.entitytype !== 'publication') return;
     var author, name;

@@ -4,55 +4,86 @@ Utility functions to create the database and load the design documents.
 """
 
 import os
+import csv
+import uuid
 
 import couchdb
+
+from wrapid.utils import now, to_ascii
 
 from pubrefdb import configuration
 
 
-def get_db():
-    "Get the existing database. Raise KeyError if it does not exist."
-    server = couchdb.Server(configuration.COUCHDB_SERVER)
-    try:
-        return server[configuration.COUCHDB_DATABASE]
-    except couchdb.http.ResourceNotFound:
-        raise KeyError('database does not exist')
+class DocumentSaver(object):
+    "Context handler saving (update or create) a document in the database."
 
-def create_db():
-    "Create a new database."
-    server = couchdb.Server(configuration.COUCHDB_SERVER)
-    return server.create(configuration.COUCHDB_DATABASE)
+    entitytype = None
+
+    def __init__(self, db, doc=dict(), values=dict(), force=False):
+        self.db = db
+        self.doc = doc
+        if self.doc.has_key('_id'):
+            if values:
+                try:
+                    rev = values.get('_rev', values['rev'])
+                    if rev != self.doc['_rev']:
+                        raise ValueError('document revision mismatch;'
+                                         ' document has been edited'
+                                         ' by someone else')
+                except KeyError:
+                    raise ValueError('document revision missing')
+            elif force:
+                try:
+                    doc['_rev'] = db.revisions(doc['_id']).next().rev
+                except StopIteration:
+                    pass
+        else:
+            self.doc['_id'] = uuid.uuid4().hex
+        if self.entitytype and not self.doc.has_key('entitytype'):
+            self.doc['entitytype'] = self.entitytype
+            self.doc['created'] = now()
+
+    def __enter__(self):
+        return self.doc
+
+    def __exit__(self, type, value, tb):
+        if type is not None: return False # No exceptions handled here
+        if self.entitytype:
+            self.doc['modified'] = now()
+        self.db.save(self.doc)
 
 
-def save(db, doc):
-    "Update or create the document."
-    try:
-        doc['_rev'] = db.revisions(doc['_id']).next().rev
-    except StopIteration:
-        pass
-    db.save(doc)
+class PublicationSaver(DocumentSaver):
+    "Context handler saving a publication document in the database."
+    entitytype = 'publication'
+
+class MetadataSaver(DocumentSaver):
+    "Context handler saving a metadata document in the database."
+    entitytype = 'metadata'
 
 
 def load_pilist(db):
     "Load the first version of the PI list."
-
+    if db.get('pilist'): return
+    # Get the list from a CSV file
+    doc = dict(_id='pilist',
+               pis=[])
+    pis = doc['pis']
     try:
-        doc = db['pilist']
-    except couchdb.http.ResourceNotFound:
-        doc = dict(_id='pilist',
-                   entitytype='metadata',
-                   pis=[dict(name='Lundeberg J',
-                             affiliation='Royal Institute of Technology,'
-                             ' Science for Life Laboratory'),
-                        dict(name='Uhlen M',
-                             affiliation='Royal Institute of Technology,'
-                             ' Science for Life Laboratory'),
-                        dict(name='Kere J',
-                             affiliation='Karolinska Institute,'
-                             ' Karolinska Institutet,'
-                             ' Science for Life Laboratory')])
-        save(db, doc)
-
+        infile = open('data/pilist.csv')
+    except IOError:
+        pass
+    else:
+        reader = csv.reader(infile)
+        for record in reader:
+            name = record[0].strip()
+            if not name: continue
+            affiliations = [a.strip() for a in record[1:] if a.strip()]
+            pis.append(dict(name=name,
+                            normalized_name=to_ascii(name),
+                            affiliation=', '.join(affiliations)))
+    with MetadataSaver(db, doc):
+        pass
 
 def load_designs(db, root='designs'):
     for design in os.listdir(root):
@@ -75,16 +106,18 @@ def load_designs(db, root='designs'):
                 key = 'map'
             views.setdefault(name, dict())[key] = code
         doc = dict(_id="_design/%s" % design, views=views)
-        save(db, doc)
+        with DocumentSaver(db, doc, force=True):
+            pass
 
 
 if __name__ == '__main__':
     try:
-        db = get_db()
+        db = configuration.get_db()
     except KeyError:
         print 'Creating the database...'
-        db = create_db()
-    print 'Loading PI list...'
+        server = couchdb.Server(configuration.COUCHDB_SERVER)
+        db = server.create(configuration.COUCHDB_DATABASE)
+    print 'Loading PI list (if any and not done)...'
     load_pilist(db)
-    print 'Loading design documents...'
+    print 'Reloading design documents...'
     load_designs(db)

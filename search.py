@@ -42,6 +42,7 @@ class Search(MethodMixin, GET):
                 term = term.strip()
                 publications.extend(self.search_pmid(term))
                 publications.extend(self.search_author(term))
+                publications.extend(self.search_journal(term))
         self.sort_publications(publications)
         for publication in publications:
             self.normalize_publication(publication, request.application.get_url)
@@ -55,8 +56,11 @@ class Search(MethodMixin, GET):
                               href=request.get_url()))
 
     def search_pmid(self, pmid):
-        return self.query_docs('publication/pmid', pmid)
+        return self.get_docs('publication/pmid', pmid)
 
     def search_author(self, author):
-        author = to_ascii(author).lower()
-        return self.query_docs('publication/author', author, author + 'Z')
+        author = to_ascii(author)
+        return self.get_docs('publication/author', author, author + 'Z')
+
+    def search_journal(self, journal):
+        return self.get_docs('publication/journal', journal, journal + 'Z')

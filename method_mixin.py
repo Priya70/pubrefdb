@@ -12,56 +12,13 @@ import couchdb
 
 from wrapid.methods import *
 from wrapid.login import LoginMixin
-from wrapid.utils import now, to_ascii
+from wrapid.utils import to_ascii
 from wrapid.json_representation import JsonRepresentation
 from wrapid.text_representation import TextRepresentation
+## from wrapid.xml_representation import XmlRepresentation
 
 from . import configuration
 from .html_representation import *
-
-
-class DocumentSaver(object):
-    "Context handler saving (update or create) a document in the database."
-
-    # Must be specified by inheriting class
-    entitytype = None
-
-    def __init__(self, db, doc=dict(), values=dict()):
-        assert self.entitytype
-        self.db = db
-        self.doc = doc
-        if self.doc.has_key('_id'):     # Doc exists in the database
-            try:
-                rev = values.get('_rev', values['rev'])
-                if rev != self.doc['_rev']:
-                    raise ValueError('document revision mismatch;'
-                                     ' someone else has edited the document')
-            except KeyError:
-                raise ValueError('document revision missing')
-        else:
-            self.doc['_id'] = uuid.uuid4().hex
-            self.doc['entitytype'] = self.entitytype
-            self.doc['created'] = now()
-
-    def __enter__(self):
-        return self.doc
-
-    def __exit__(self, type, value, tb):
-        if type is not None: return False # No exceptions handled here
-        self.doc['modified'] = now()
-        self.db.save(self.doc)
-
-    def update(self, data):
-        self.doc.update(data)
-
-
-class PublicationSaver(DocumentSaver):
-    "Context handler saving a publication document in the database."
-    entitytype = 'publication'
-
-class MetadataSaver(DocumentSaver):
-    "Context handler saving a metadata document in the database."
-    entitytype = 'metadata'
 
 
 class MethodMixin(LoginMixin):
@@ -70,8 +27,7 @@ class MethodMixin(LoginMixin):
     def prepare(self, request):
         "Connect to the master database and authenticate the user login."
         self.set_login(request)
-        server = couchdb.Server(configuration.COUCHDB_SERVER)
-        self.db = server[configuration.COUCHDB_DATABASE]
+        self.db = configuration.get_db()
         self.set_current(request)
         self.check_access(request.application.name)
 
@@ -143,8 +99,7 @@ class MethodMixin(LoginMixin):
         get_url = request.application.get_url
         links = [dict(title='Search',
                       href=get_url('search'))]
-        now = time.localtime()
-        for year in xrange(2010, now.tm_year+1):
+        for year in xrange(2010, time.localtime().tm_year+1):
             links.append(dict(title="Year: %s" % year,
                               href=get_url('year', str(year))))
         try:
@@ -152,24 +107,30 @@ class MethodMixin(LoginMixin):
         except couchdb.http.ResourceNotFound:
             pass
         else:
-            for pi in doc['pis']:
+            pis = doc['pis']
+            pis.sort(lambda i, j: cmp(i['normalized_name'].lower(),
+                                      j['normalized_name'].lower()))
+            for pi in pis:
                 name = pi['name']
-                url = get_url('author', name.replace(' ', '_'))
+                normalized_name = pi['normalized_name']
+                url = get_url('author', normalized_name.replace(' ', '_'))
                 links.append(dict(title="PIs: %s" % name, href=url))
+        for item in self.db.view('publication/tags', group=True):
+            links.append(dict(title="Tags: %s" % item.key,
+                              href=get_url('tag', item.key)))
+        links.append(dict(title='Journals',
+                          href=get_url('journals')))
         links.append(dict(title='Documentation: About',
                           href=get_url('about')))
         links.append(dict(title='Documentation: API',
                           href=get_url('doc')))
         return links
 
-    def query_docs(self, indexname, key, last=None,
-                   descending=False, limit=None):
-        """Query the named index using the given key, or interval.
-        Return a list of complete documents.
+    def get_docs(self, indexname, key, last=None, **kwargs):
+        """Get the lst of documents using the named index and
+        the given key or interval.
         """
-        kwargs = dict(include_docs=True, descending=descending)
-        if limit is not None:
-            kwargs['limit'] = limit
+        kwargs['include_docs'] = True
         view = self.db.view(indexname, **kwargs)
         if key is None:
             iterator = view

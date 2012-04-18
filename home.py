@@ -24,11 +24,11 @@ class Home(MethodMixin, GET):
 
     def get_data_resource(self, request):
         limit = 10
-        publications = self.query_docs('publication/published',
-                                       '9999', last='0',
-                                       descending=True,
-                                       limit=limit)
-        # Already sorted by index
+        publications = self.get_docs('publication/published',
+                                     '9999', last='0',
+                                     descending=True,
+                                     limit=limit)
+        # Already sorted by the index
         for publication in publications:
             self.normalize_publication(publication, request.application.get_url)
         return dict(title='SciLifeLab recent publications',

@@ -1,6 +1,7 @@
 /* PubRefDb: Publication database web application.
    Index publication documents by PubMed ID (PMID).
-   Value: null. */
+   Value: null.
+*/
 function(doc) {
     if (doc.entitytype !== 'publication') return;
     for (var i in doc.xrefs) {

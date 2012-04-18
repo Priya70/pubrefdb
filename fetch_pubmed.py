@@ -4,8 +4,8 @@ Search and load publications from PubMed; loop through PIs in the database.
 """
 
 from pubrefdb import pubmed
-from pubrefdb.database import get_db
-from pubrefdb.method_mixin import PublicationSaver
+from pubrefdb import configuration
+from pubrefdb.database import PublicationSaver
 
 
 def fetch_pmids(db, pi, years, affiliations):
@@ -23,11 +23,19 @@ def fetch_pmids(db, pi, years, affiliations):
     return sorted(pmids)
 
 def add_publication(db, pmid):
-    "Add the publication to the database if not already in it."
+    """Add the publication to the database if not already in it.
+    Set the tag 'SciLifeLab' if marked such in the affiliation.
+    """
     view = db.view('publication/pmid')
     if len(view[pmid]) > 0: return
     article = pubmed.Article(pmid)
     if not article.pmid: return
+    affiliation = article.affiliation or ''
+    affiliation = affiliation.lower()
+    for key in ['science for life laboratory', 'scilifelab']:
+        if key in affiliation:
+            article.tags.append('SciLifeLab')
+            break
     with PublicationSaver(db, doc=article.get_data()) as doc:
         pass
     return doc
@@ -38,16 +46,17 @@ if __name__ == '__main__':
     import time
     year = time.localtime().tm_year
     years = range(year-2, year+1)
-    db = get_db()
+    db = configuration.get_db()
     pis = db['pilist']['pis']
     # If any names given on command line, then check only those
     names = set([a.lower().replace('_', ' ') for a in sys.argv[1:]])
     if names:
         for i, pi in enumerate(pis):
-            if pi['name'].lower() not in names:
+            if pi['normalized_name'].lower() not in names:
                 pis[i] = None
         pis = [pi for pi in pis if pi is not None]
-    pis = [(pi['name'], [a.strip() for a in pi['affiliation'].split(',')])
+    pis = [(pi['normalized_name'],
+            [a.strip() for a in pi['affiliation'].split(',')])
            for pi in pis]
     for pi, affiliations in pis:
         pmids = fetch_pmids(db, pi, years, affiliations)

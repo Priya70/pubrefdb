@@ -17,9 +17,9 @@ class Author(MethodMixin, GET):
         author = request.variables['author']
         author_normalized = to_ascii(author)
         author_normalized = author_normalized.replace('_', ' ').lower()
-        publications = self.query_docs('publication/author',
-                                       author_normalized,
-                                       author_normalized + 'Z')
+        publications = self.get_docs('publication/author',
+                                     author_normalized,
+                                     author_normalized + 'Z')
         self.sort_publications(publications)
         for publication in publications:
             self.normalize_publication(publication, request.application.get_url)
