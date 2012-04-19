@@ -21,6 +21,8 @@ class PublicationHtmlRepresentation(HtmlRepresentation):
     def get_content(self):
         table = TABLE(TR(TH('Authors'),
                          TD(self.format_authors(self.data['authors']))),
+                      TR(TH('Type'),
+                         TD(self.data.get('type'))),
                       TR(TH('Journal'),
                          TD(self.format_journal(self.data.get('journal')))),
                       TR(TH('Published'),

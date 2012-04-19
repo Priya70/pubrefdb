@@ -47,10 +47,10 @@ class HtmlRepresentation(BaseHtmlRepresentation):
 
     def format_journal(self, journal):
         if not journal: return '-'
-        return "%s %s (%s) %s" % (journal['abbreviation'] or journal['title'],
-                                  B(journal['volume'] or '-'),
-                                  journal['issue'] or '-',
-                                  journal['pages'] or '-')
+        return "%s, %s (%s) %s" % (journal['abbreviation'] or journal['title'],
+                                   B(journal['volume'] or '-'),
+                                   journal['issue'] or '-',
+                                   journal['pages'] or '-')
 
     def format_tags(self, tags):
         if not tags: return '-'

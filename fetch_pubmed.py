@@ -7,7 +7,6 @@ from pubrefdb import pubmed
 from pubrefdb import configuration
 from pubrefdb.database import PublicationSaver
 
-
 def fetch_pmids(db, pi, years, affiliations):
     """Get the PMIDs for publications involving the given PI
     at the given affiliations for the specified years.
@@ -44,8 +43,12 @@ def add_publication(db, pmid):
 if __name__ == '__main__':
     import sys
     import time
+
+    DELAY = 10
+
     year = time.localtime().tm_year
-    years = range(year-2, year+1)
+    ## years = range(2010, year+1)
+    years = range(year-1, year+1)
     db = configuration.get_db()
     pis = db['pilist']['pis']
     # If any names given on command line, then check only those
@@ -59,6 +62,7 @@ if __name__ == '__main__':
             [a.strip() for a in pi['affiliation'].split(',')])
            for pi in pis]
     for pi, affiliations in pis:
+        time.sleep(DELAY)
         pmids = fetch_pmids(db, pi, years, affiliations)
         count_all = len(pmids)
         count_new = 0

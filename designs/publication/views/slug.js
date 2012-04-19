@@ -1,9 +1,9 @@
 /* PubRefDb: Publication database web application.
    Index publication documents by slug.
-   Value: null.
+   Value: id.
 */
 function(doc) {
     if (doc.entitytype !== 'publication') return;
     if (!doc.slug) return;
-    emit(doc.slug, null);
+    emit(doc.slug, doc._id);
 }

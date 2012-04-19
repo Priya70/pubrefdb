@@ -30,6 +30,7 @@ class Article(object):
         self.authors = []
         self.affiliation = None
         self.journal = None
+        self.type = None
         self.published = None
         self.abstract = None
         self.xrefs = []
@@ -55,6 +56,7 @@ class Article(object):
                     authors=self.authors,
                     affiliation=self.affiliation,
                     journal=self.journal,
+                    type=self.type,
                     published=self.published,
                     abstract= self.abstract,
                     xrefs=self.xrefs,
@@ -64,8 +66,16 @@ class Article(object):
     def fetch(self, pmid):
         "Fetch the XML from PubMed and parse into an ElementTree."
         url = PUBMED_FETCH_URL % pmid
-        data = urllib.urlopen(url).read()
-        return xml.etree.ElementTree.fromstring(data)
+        infile = urllib.urlopen(url)
+        code = infile.getcode() 
+        if code < 200 or code >= 400:
+            raise IOError("HTTP error %s" % code)
+        data = infile.read()
+        try:
+            return xml.etree.ElementTree.fromstring(data)
+        except:
+            print data
+            raise
 
     def parse(self, tree):
         "Parse the XML tree for the article information."
@@ -77,11 +87,13 @@ class Article(object):
         self.authors = self.get_authors(element.find('AuthorList'))
         self.affiliation = element.findtext('Affiliation') or None
         self.journal = self.get_journal(element)
-        self.abstract = self.get_abstract(element)
+        self.type = self.get_type(element)
         self.published = self.get_published(tree)
+        self.abstract = self.get_abstract(element)
         self.xrefs = self.get_xrefs(tree)
         if self.pmid is None:
             pmid = tree.findtext('MedlineCitation/PMID')
+            print 'PMID', pmid
             self.xrefs.append(dict(xdb='pubmed', xkey=pmid))
 
     def get_authors(self, authorlist):
@@ -115,6 +127,46 @@ class Article(object):
             result['pages'] = element.text
         return result
 
+    def get_type(self, article):
+        element = article.find('PublicationTypeList/PublicationType')
+        if element is not None:
+            return ' '.join([t.capitalize() for t in element.text.split()])
+        else:
+            return None
+
+    def get_published(self, article):
+        elem = article.find('MedlineCitation/Article/Journal/JournalIssue/PubDate')
+        date = []
+        if elem is not None:
+            date = self.get_date(elem)
+        if len(date) < 2:               # Fallback 1: ArticleDate
+            elem = article.find('MedlineCitation/Article/ArticleDate')
+            if elem is not None:
+                date = self.get_date(elem)
+        if len(date) < 2:               # Fallback 2: PubMedPubDate
+            dates = article.findall('PubmedData/History/PubMedPubDate')
+            for status in ['epublish', 'aheadofprint', 'pubmed']:
+                for elem in dates:
+                    if elem.get('PubStatus') == status:
+                        date = self.get_date(elem)
+                        break
+                if len(date) >= 2: break
+        if len(date) == 0:              # Fallback 3: today's year and month
+            d = time.localtime()
+            date = [d.tm_year, d.tm_mon, 0]
+        elif len(date) == 1:            # Add today's month
+            d = time.localtime()
+            date = [date[0], d.tm_mon, 0]
+        elif len(date) == 2:            # Add dummy day
+            date.append(0)
+        return "%s-%02i-%02i" % tuple(date)
+
+    def get_abstract(self, element):
+        sections = []
+        for elem in element.findall('Abstract/AbstractText'):
+            sections.append(elem.text)
+        return '\n\n'.join(sections)
+
     def get_xrefs(self, article):
         result = []
         for elem in article.findall('PubmedData/ArticleIdList/ArticleId'):
@@ -126,35 +178,6 @@ class Article(object):
                 result.append(dict(xdb=xdb, xkey=elem2.text))
         return result
         
-    def get_abstract(self, element):
-        sections = []
-        for elem in element.findall('Abstract/AbstractText'):
-            sections.append(elem.text)
-        return '\n\n'.join(sections)
-
-    def get_published(self, article):
-        elem = article.find('MedlineCitation/Article/Journal/JournalIssue/PubDate')
-        date = []
-        if elem:
-            date = self.get_date(elem)
-        if len(date) < 2:               # Fallback 1: PubMedPubDate
-            dates = article.findall('PubmedData/History/PubMedPubDate')
-            for status in ['epublish', 'aheadofprint', 'pubmed', 'entrez']:
-                for elem in dates:
-                    if elem.get('PubStatus') == status:
-                        date = self.get_date(elem)
-                        break
-                if len(date) >= 2: break
-        if len(date) == 0:              # Fallback 2: today's year and month
-            d = time.localtime()
-            date = [d.tm_year, d.tm_mon, 0]
-        elif len(date) == 1:            # Add today's month
-            d = time.localtime()
-            date = [date[0], d.tm_mon, 0]
-        elif len(date) == 2:            # Add dummy day
-            date.append(0)
-        return "%s-%02i-%02i" % tuple(date)
-
     def get_date(self, element):
         "Return [year, month, day]"
         year = element.findtext('Year')
@@ -221,14 +244,15 @@ def test2():
 
 
 if __name__ == '__main__':
-    url = PUBMED_FETCH_URL % '22275472'
-    infile = urllib.urlopen(url)
-    data = infile.read()
-    open('sofiadis_2012.xml', 'w').write(data)
-    ## import json
-    ## root = xml.etree.ElementTree.fromstring(open('borgstrom_2011.xml').read())
-    ## root = xml.etree.ElementTree.fromstring(open('johansson_2002.xml').read())
-    ## article = Article()
-    ## article.parse(root.find('PubmedArticle'))
+    ## url = PUBMED_FETCH_URL % '22275472'
+    ## infile = urllib.urlopen(url)
+    ## data = infile.read()
+    ## open('data/sofiadis_2012.xml', 'w').write(data)
+    import json
+    root = xml.etree.ElementTree.fromstring(open('data/borgstrom_2011.xml').read())
+    ## root = xml.etree.ElementTree.fromstring(open('data/johansson_2002.xml').read())
+    ## root = xml.etree.ElementTree.fromstring(open('data/rosin_2012.xml').read())
+    article = Article()
+    article.parse(root.find('PubmedArticle'))
     ## article=Article(pmid='11751858')
-    ## print json.dumps(article.get_data(), indent=2)
+    print json.dumps(article.get_data(), indent=2)

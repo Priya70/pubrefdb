@@ -1,9 +1,9 @@
 /* PubRefDb: Publication database web application.
-   Index publication documents by published date.
+   Index publication documents by type.
    Value: id.
 */
 function(doc) {
     if (doc.entitytype !== 'publication') return;
-    if (!doc.published) return;
-    emit(doc.published, doc._id);
+    if (!doc.type) return;
+    emit(doc.type, doc._id);
 }

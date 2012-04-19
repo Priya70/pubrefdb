@@ -127,8 +127,8 @@ class MethodMixin(LoginMixin):
         return links
 
     def get_docs(self, indexname, key, last=None, **kwargs):
-        """Get the lst of documents using the named index and
-        the given key or interval.
+        """Get the list of documents using the named index
+        and the given key or interval.
         """
         kwargs['include_docs'] = True
         view = self.db.view(indexname, **kwargs)
