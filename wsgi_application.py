@@ -47,6 +47,14 @@ application.add_resource('/{iui:uuid}',
                          name='Publication',
                          GET=Publication,
                          DELETE=DeletePublication)
+application.add_resource('/{iui:uuid}/edit',
+                         name='Publication edit',
+                         GET=EditPublication,
+                         POST=ModifyPublication)
+application.add_resource('/{iui:uuid}/hrefs',
+                         name='Publication hrefs',
+                         GET=EditPublicationHrefs,
+                         POST=ModifyPublicationHrefs)
 application.add_resource('/{iui:uuid}/tags',
                          name='Publication tags',
                          GET=EditPublicationTags,

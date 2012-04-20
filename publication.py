@@ -57,6 +57,10 @@ class PublicationHtmlRepresentation(HtmlRepresentation):
         table = TABLE()
         for xref in self.data['xrefs']:
             table.append(TR(TD(self.get_xref_link(xref))))
+        for href in self.data['hrefs']:
+            url = href['href']
+            title = href.get('title') or url
+            table.append(TR(TD(A(title, href=url))))
         return table
 
 
@@ -65,7 +69,6 @@ class Publication(MethodMixin, GET):
 
     outreprs = [JsonRepresentation,
                 TextRepresentation,
-                ## XmlRepresentation,
                 PublicationHtmlRepresentation]
 
     def set_current(self, request):
@@ -76,6 +79,10 @@ class Publication(MethodMixin, GET):
     def get_data_operations(self, request):
         ops = super(Publication, self).get_data_operations(request)
         if self.is_login_admin():
+            ops.append(dict(title='Edit',
+                            href=request.get_url('edit')))
+            ops.append(dict(title='Edit hrefs',
+                            href=request.get_url('hrefs')))
             ops.append(dict(title='Edit tags',
                             href=request.get_url('tags')))
             ops.append(dict(title='Edit slug',
@@ -93,8 +100,7 @@ class Publication(MethodMixin, GET):
         return self.publication
 
 
-class DeletePublication(MethodMixin, RedirectMixin, DELETE):
-    "Delete the publication."
+class EditMixin(object):
 
     def is_accessible(self):
         "Is the login user allowed to access this method of the resource?"
@@ -102,6 +108,10 @@ class DeletePublication(MethodMixin, RedirectMixin, DELETE):
 
     def set_current(self, request):
         self.set_current_publication(request)
+
+
+class DeletePublication(EditMixin, MethodMixin, RedirectMixin, DELETE):
+    "Delete the publication."
 
     def process(self, request):
         iui = self.publication['_id']
@@ -111,7 +121,171 @@ class DeletePublication(MethodMixin, RedirectMixin, DELETE):
         self.set_redirect(request.application.url)
 
 
-class EditPublicationTags(MethodMixin, GET):
+class EditPublication(EditMixin, MethodMixin, GET):
+    "Display edit form for basic fields of a publication."
+
+    outreprs = [JsonRepresentation,
+                TextRepresentation,
+                FormHtmlRepresentation]
+
+    fields = [StringField('title', title='Title',
+                          required=True, length=80, maxlength=1000),
+              StringField('type', title='Type',
+                          required=True,
+                          descr='Publication type.'),
+              StringField('journal_title', 'Journal title',
+                          length=40,
+                          descr='Full title of journal.'),
+              StringField('journal_abbrev', 'Abbrev title',
+                          length=20,
+                          descr='Abbreviated title of journal.'),
+              StringField('journal_volume', 'Volume',
+                          length=8,
+                          descr='Journal volume.'),
+              StringField('journal_issue', 'Issue',
+                          length=8,
+                          descr='Journal issue.'),
+              StringField('journal_pages', 'Pages',
+                          length=20,
+                          descr='Publication pages in journal issue.'),
+              StringField('published', title='Published',
+                          required=True, length=10, maxlength=10,
+                          descr='Date of publication. Use ISO format'
+                          " 'YYYY-MM-DD' with 00 for unknown month or day."),
+              StringField('affiliation', title='Affiliation',
+                          length=80, maxlength=1000,
+                          descr='Affiliation of authors.'),
+              TextField('abstract', title='Abstract'),
+              HiddenField('rev',
+                          required=True,
+                          descr='Couchdb document revision')]
+
+    def get_data_resource(self, request):
+        journal = self.publication.get('journal') or dict()
+        values = dict(title=self.publication['title'],
+                      type=self.publication['type'],
+                      journal_title=journal.get('title'),
+                      journal_abbrev=journal.get('abbreviation'),
+                      journal_volume=journal.get('volume'),
+                      journal_issue=journal.get('issue'),
+                      journal_pages=journal.get('pages'),
+                      published=self.publication['published'],
+                      affiliation=self.publication.get('affiliation'),
+                      abstract=self.publication.get('abstract'),
+                      rev=self.publication.get('_rev'))
+        return dict(title="Edit '%s'" % self.publication['title'],
+                    form=dict(title='Edit publication',
+                              fields=self.get_data_fields(),
+                              values=values,
+                              label='Save',
+                              href=request.url,
+                              cancel=request.get_url('..')))
+
+
+class ModifyPublication(EditMixin, MethodMixin, RedirectMixin, POST):
+    "Modify basic fields of the publication."
+
+    fields = EditPublication.fields
+
+    def process(self, request):
+        values = self.parse_fields(request)
+        try:
+            saver = PublicationSaver(self.db, self.publication, values)
+        except ValueError, msg:
+            raise HTTP_BAD_REQUEST(str(msg))
+        with saver:
+            self.publication['title'] = values.get('title')
+            self.publication['type'] = values.get('type')
+            try:
+                journal = self.publication['journal']
+            except KeyError:
+                journal = self.publication['journal'] = dict()
+            journal['title'] = values.get('journal_title')
+            journal['abbreviation'] = values.get('journal_abbrev')
+            journal['volume'] = values.get('journal_volume')
+            journal['issue'] = values.get('journal_issue')
+            journal['pages'] = values.get('journal_pages')
+            self.publication['published'] = values.get('published')
+            self.publication['affiliation'] = values.get('affiliation')
+            self.publication['abstract']= values.get('abstract')
+        self.set_redirect(request.get_url('..'))
+
+
+class EditPublicationHrefs(EditMixin, MethodMixin, GET):
+    "Display edit form for the hrefs of a publication."
+
+    outreprs = [JsonRepresentation,
+                TextRepresentation,
+                FormHtmlRepresentation]
+
+    fields = [MultiSelectField('remove', title='Hrefs',
+                               check=False, boxes=True,
+                               descr='Check the hrefs to remove from the list.'),
+              StringField('add', title='Add href',
+                          descr='Add a new href; this must be its URL.'),
+              StringField('title', title='Title',
+                          descr='The title for the href to add. Optional.'),
+              HiddenField('rev',
+                          required=True,
+                          descr='Couchdb document revision')]
+
+    def get_data_resource(self, request):
+        options = []
+        for href in self.publication['hrefs']:
+            try:
+                title = href['title']
+                if not title: raise KeyError
+                title = "%s (%s)" % (title, href['href'])
+            except KeyError:
+                title = href['href']
+            options.append(dict(value=href['href'], title=title))
+        override = dict(remove=dict(options=options))
+        values = dict(rev=self.publication.get('_rev'))
+        return dict(title="Edit hrefs for '%s'" % self.publication['title'],
+                    form=dict(title='Edit publication hrefs',
+                              fields=self.get_data_fields(override=override),
+                              values=values,
+                              label='Save',
+                              href=request.url,
+                              cancel=request.get_url('..')))
+
+
+class ModifyPublicationHrefs(EditMixin, MethodMixin, RedirectMixin, POST):
+    "Modify the hrefs of the publication."
+
+    fields = EditPublicationHrefs.fields
+
+    def process(self, request):
+        values = self.parse_fields(request)
+        try:
+            saver = PublicationSaver(self.db, self.publication, values)
+        except ValueError, msg:
+            raise HTTP_BAD_REQUEST(str(msg))
+        with saver:
+            hrefs = self.publication['hrefs']
+            for remove in values.get('remove') or []:
+                for i, href in enumerate(hrefs):
+                    if not href: continue
+                    if href['href'] == remove:
+                        hrefs[i] = None
+            self.publication['hrefs'] = [h for h in hrefs if h]
+            url = values.get('add')
+            title = values.get('title')
+            for href in self.publication['hrefs']:
+                if href['href'] == url:
+                    href['title'] = title
+                    break
+            else:
+                if url:
+                    if title:
+                        href = dict(href=url, title=title)
+                    else:
+                        href = dict(href=url)
+                    self.publication['hrefs'].append(href)
+        self.set_redirect(request.get_url('..'))
+
+
+class EditPublicationTags(EditMixin, MethodMixin, GET):
     "Display edit form for the tags of a publication."
 
     outreprs = [JsonRepresentation,
@@ -127,39 +301,24 @@ class EditPublicationTags(MethodMixin, GET):
                           required=True,
                           descr='Couchdb document revision')]
 
-    def is_accessible(self):
-        "Is the login user allowed to access this method of the resource?"
-        return self.is_login_admin()
-
-    def set_current(self, request):
-        self.set_current_publication(request)
-
     def get_data_resource(self, request):
         view = self.db.view('publication/tags', group=True)
         override = dict(tags=dict(options=[v.key for v in view]))
         values = dict(rev=self.publication.get('_rev'),
                       tags=self.publication.get('tags') or [])
-        cancel = request.application.get_url(self.publication['_id'])
         return dict(title="Edit tags for '%s'" % self.publication['title'],
-                    form=dict(title='Edit publication slug',
+                    form=dict(title='Edit publication tags',
                               fields=self.get_data_fields(override=override),
                               values=values,
                               label='Save',
                               href=request.url,
-                              cancel=cancel))
+                              cancel=request.get_url('..')))
 
 
-class ModifyPublicationTags(MethodMixin, RedirectMixin, POST):
+class ModifyPublicationTags(EditMixin, MethodMixin, RedirectMixin, POST):
     "Modify the tags of the publication."
 
     fields = EditPublicationTags.fields
-
-    def is_accessible(self):
-        "Is the login user allowed to access this method of the resource?"
-        return self.is_login_admin()
-
-    def set_current(self, request):
-        self.set_current_publication(request)
 
     def process(self, request):
         values = self.parse_fields(request)
@@ -167,17 +326,17 @@ class ModifyPublicationTags(MethodMixin, RedirectMixin, POST):
             saver = PublicationSaver(self.db, self.publication, values)
         except ValueError, msg:
             raise HTTP_BAD_REQUEST(str(msg))
-        tags = values.get('tags') or []
-        tag = values.get('add')
-        if tag:
-            if tag not in tags:
-                tags.append(tag)
         with saver:
+            tags = values.get('tags') or []
+            tag = values.get('add')
+            if tag:
+                if tag not in tags:
+                    tags.append(tag)
             self.publication['tags'] = tags
-        self.set_redirect(request.application.get_url(self.publication['_id']))
+        self.set_redirect(request.get_url('..'))
 
 
-class EditPublicationSlug(MethodMixin, GET):
+class EditPublicationSlug(EditMixin, MethodMixin, GET):
     "Display edit form for the slug of a publication."
 
     outreprs = [JsonRepresentation,
@@ -191,37 +350,22 @@ class EditPublicationSlug(MethodMixin, GET):
                           required=True,
                           descr='Couchdb document revision')]
 
-    def is_accessible(self):
-        "Is the login user allowed to access this method of the resource?"
-        return self.is_login_admin()
-
-    def set_current(self, request):
-        self.set_current_publication(request)
-
     def get_data_resource(self, request):
         values = dict(slug=self.publication.get('slug'),
                       rev=self.publication.get('_rev'))
-        cancel = request.application.get_url(self.publication['_id'])
         return dict(title="Edit slug for '%s'" % self.publication['title'],
                     form=dict(title='Edit publication slug',
                               fields=self.get_data_fields(),
                               values=values,
                               label='Save',
                               href=request.url,
-                              cancel=cancel))
+                              cancel=request.get_url('..')))
 
 
-class ModifyPublicationSlug(MethodMixin, RedirectMixin, POST):
+class ModifyPublicationSlug(EditMixin, MethodMixin, RedirectMixin, POST):
     "Modify the slug of the publication."
 
     fields = EditPublicationSlug.fields
-
-    def is_accessible(self):
-        "Is the login user allowed to access this method of the resource?"
-        return self.is_login_admin()
-
-    def set_current(self, request):
-        self.set_current_publication(request)
 
     def process(self, request):
         values = self.parse_fields(request)
@@ -229,21 +373,19 @@ class ModifyPublicationSlug(MethodMixin, RedirectMixin, POST):
             saver = PublicationSaver(self.db, self.publication, values)
         except ValueError, msg:
             raise HTTP_BAD_REQUEST(str(msg))
-        slug = values.get('slug')
-        if slug:
-            slug = slug.strip()
-            slug = slug.lower()
-            slug = slug.replace(' ', '-')
-        if slug != self.publication.get('slug'):
+        with saver:
+            slug = values.get('slug')
             if slug:
-                # Check if slug already defined for other publication
-                if self.get_docs('publication/slug', slug):
-                    raise HTTP_CONFLICT("slug '%s' already in use")
-            else:
-                slug = None
-            with saver:
-                self.publication['slug'] = slug
-        self.set_redirect(request.application.get_url(self.publication['_id']))
+                slug = slug.strip()
+                slug = slug.lower()
+                slug = slug.replace(' ', '-')
+            # Check if slug already defined for other publication
+            if slug and \
+               slug != self.publication.get('slug') and \
+               self.get_docs('publication/slug', slug):
+                raise HTTP_CONFLICT("slug '%s' already in use")
+            self.publication['slug'] = slug or None
+        self.set_redirect(request.get_url('..'))
 
 
 class PublicationFile(MethodMixin, File):
@@ -262,7 +404,7 @@ class PublicationFile(MethodMixin, File):
         return os.path.join(configuration.DATA_DIR, self.publication['_id'])
 
 
-class EditPublicationFile(MethodMixin, GET):
+class EditPublicationFile(EditMixin, MethodMixin, GET):
     "Display edit page for attaching or deleting a file for the publication. "
 
     outreprs = [JsonRepresentation,
@@ -275,13 +417,6 @@ class EditPublicationFile(MethodMixin, GET):
               FileField('attach', title='Attach',
                         descr='Attach the given file.')]
 
-    def is_accessible(self):
-        "Is the login user allowed to access this method of the resource?"
-        return self.is_login_admin()
-
-    def set_current(self, request):
-        self.set_current_publication(request)
-
     def get_data_resource(self, request):
         files = self.get_publication_files(self.publication['_id'],
                                            request.get_url)
@@ -289,22 +424,15 @@ class EditPublicationFile(MethodMixin, GET):
         return dict(title='Edit attached files',
                     form=dict(title='Edit attached files',
                               fields=self.get_data_fields(override=override),
-                              label='Update',
+                              label='Save',
                               href=request.url,
-                              cancel=request.url))
+                              cancel=request.get_url('..')))
 
 
-class ModifyPublicationFile(MethodMixin, RedirectMixin, POST):
+class ModifyPublicationFile(EditMixin, MethodMixin, RedirectMixin, POST):
     "Modify the list of files attached to the publication."
 
     fields = EditPublicationFile.fields
-
-    def is_accessible(self):
-        "Is the login user allowed to access this method of the resource?"
-        return self.is_login_admin()
-
-    def set_current(self, request):
-        self.set_current_publication(request)
 
     def process(self, request):
         iui = self.publication['_id']
@@ -370,9 +498,9 @@ class ImportPubmedPublication(MethodMixin, RedirectMixin, POST):
             article = pubmed.Article(pmid)
             if not article.pmid:
                 raise HTTP_BAD_REQUEST("no article with PMID %s" % pmid)
-            with PublicationSaver(self.db) as ps:
-                ps.update(article.get_data())
-                iui = ps.doc['_id']
+            with PublicationSaver(self.db) as doc:
+                doc.update(article.get_data())
+                iui = doc['_id']
         self.set_redirect(request.application.get_url(iui))
 
 

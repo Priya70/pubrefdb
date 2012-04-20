@@ -15,7 +15,6 @@ from wrapid.login import LoginMixin
 from wrapid.utils import to_ascii
 from wrapid.json_representation import JsonRepresentation
 from wrapid.text_representation import TextRepresentation
-## from wrapid.xml_representation import XmlRepresentation
 
 from . import configuration
 from .html_representation import *
