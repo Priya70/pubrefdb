@@ -16,21 +16,18 @@ class Home(MethodMixin, GET):
     def get_data_operations(self, request):
         ops = []
         if self.is_login_admin():
-            ops.append(dict(title='PubMed import',
-                            href=request.application.get_url('pubmed')))
-            ops.append(dict(title='Edit PI list',
-                            href=request.application.get_url('pilist')))
+            ops.extend(self.get_data_main_operations(request))
         return ops
 
     def get_data_resource(self, request):
-        limit = 10
+        LIMIT = 10
         publications = self.get_docs('publication/published',
                                      '9999', last='0',
                                      descending=True,
-                                     limit=limit)
+                                     limit=LIMIT)
         # Already sorted by the index
         for publication in publications:
             self.normalize_publication(publication, request.application.get_url)
-        return dict(title='SciLifeLab recent publications',
+        return dict(title='Most recent publications',
                     resource='Home',
                     publications=publications)

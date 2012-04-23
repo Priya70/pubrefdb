@@ -27,6 +27,12 @@ class Search(MethodMixin, GET):
 
     fields = [StringField('terms', title='Terms')]
 
+    def get_data_operations(self, request):
+        ops = []
+        if self.is_login_admin():
+            ops.extend(self.get_data_main_operations(request))
+        return ops
+
     def get_data_resource(self, request):
         values = self.parse_fields(request)
         publications = []
@@ -40,9 +46,17 @@ class Search(MethodMixin, GET):
         else:
             for term in terms.split(','):
                 term = term.strip()
-                publications.extend(self.search_pmid(term))
+                try:
+                    xdb, xkey = term.split(':', 1)
+                except ValueError:
+                    xdb = 'pubmed'
+                    xkey = term
+                publications.extend(self.search_xref(xdb, xkey))
                 publications.extend(self.search_author(term))
                 publications.extend(self.search_journal(term))
+        if len(publications) == 1:
+            id = publications[0]['_id']
+            raise HTTP_SEE_OTHER(Location=request.application.get_url(id))
         self.sort_publications(publications)
         for publication in publications:
             self.normalize_publication(publication, request.application.get_url)
@@ -55,8 +69,8 @@ class Search(MethodMixin, GET):
                               method='GET',
                               href=request.get_url()))
 
-    def search_pmid(self, pmid):
-        return self.get_docs('publication/pmid', pmid)
+    def search_xref(self, xdb, xkey):
+        return self.get_docs('publication/xref', [xdb.lower(), xkey])
 
     def search_author(self, author):
         author = to_ascii(author)

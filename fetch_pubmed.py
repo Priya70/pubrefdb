@@ -10,7 +10,6 @@ from pubrefdb.database import PublicationSaver
 def fetch_pmids(db, pi, years, affiliations):
     """Get the PMIDs for publications involving the given PI
     at the given affiliations for the specified years.
-    Remove thos PMIDs which already exist in the database.
     """
     pmids = set()
     for year in years:
@@ -23,10 +22,11 @@ def fetch_pmids(db, pi, years, affiliations):
 
 def add_publication(db, pmid):
     """Add the publication to the database if not already in it.
+    Skip if the PMID has been excluded.
     Set the tag 'SciLifeLab' if marked such in the affiliation.
     """
-    view = db.view('publication/pmid')
-    if len(view[pmid]) > 0: return
+    if len(db.view('publication/xref')[['pubmed', pmid]]) > 0: return
+    if len(db.view('publication/excluded')[['pubmed', pmid]]) > 0: return
     article = pubmed.Article(pmid)
     if not article.pmid: return
     affiliation = article.affiliation or ''

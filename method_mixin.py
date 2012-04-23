@@ -67,7 +67,12 @@ class MethodMixin(LoginMixin):
 
     def set_current_publication(self, request):
         "Set the publication to operate on."
-        self.publication = dict(self.db[request.variables['iui']])
+        try:
+            self.publication = dict(self.db[request.variables['iui']])
+        except couchdb.http.ResourceNotFound:
+            return HTTP_NOT_FOUND
+        if self.publication['entitytype'] != 'publication':
+            return HTTP_NOT_FOUND
 
     def check_access(self, realm):
         """Check that login account may access this resource.
@@ -92,6 +97,18 @@ class MethodMixin(LoginMixin):
         if 'admin' in self.login['teams']: return True
         if 'PubRefDb' in self.login['teams']: return True
         return False
+
+    def get_data_main_operations(self, request):
+        """Get the links for the main-level operations:
+        adding publication, importing from PubMed, editing the PI list.
+        Only for admin team login.
+        """
+        return [dict(title='Add publication',
+                     href=request.application.get_url('publication')),
+                dict(title='PubMed import',
+                     href=request.application.get_url('pubmed')),
+                dict(title='Edit PI list',
+                     href=request.application.get_url('pilist'))]
 
     def get_data_links(self, request):
         "Return the links response data."

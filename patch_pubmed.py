@@ -22,8 +22,8 @@ def is_incomplete(db, doc):
 def patch_publication(db, pmid):
     article = pubmed.Article(pmid)
     if not article.pmid: return
-    view = db.view('publication/pmid', include_docs=True)
-    results = list(view[pmid])
+    view = db.view('publication/xref', include_docs=True)
+    results = list(view[['pubmed', pmid]])
     with PublicationSaver(db, doc=results[0].doc) as doc:
         doc['type'] = article.type
         doc['published'] = article.published
@@ -49,7 +49,7 @@ if __name__ == '__main__':
     import time
     DELAY = 10
     db = configuration.get_db()
-    for item in db.view('publication/pmid'):
+    for item in db.view('publication/xref')[['pubmed'] : ['pubmed', 'ZZZZZZ']]:
         doc = db[item.value]
         if is_incomplete(db, doc):
             patch_publication(db, item.key)

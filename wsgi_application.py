@@ -74,15 +74,20 @@ application.add_resource('/{iui:uuid}/file',
 application.add_resource('/{iui:uuid}/file/{filepath:path}',
                          name='Publication file',
                          GET=PublicationFile)
+application.add_resource('/{iui:uuid}/exclude',
+                         name='Publication exclude',
+                         GET=VerifyExcludePublication,
+                         POST=ExcludePublication)
+application.add_resource('/publication',
+                         name='Publication add',
+                         GET=InputPublication,
+                         POST=AddPublication)
 application.add_resource('/pubmed',
                          name='Publication import',
                          GET=InputPubmedPublication,
                          POST=ImportPubmedPublication)
-application.add_resource('/pubmed/{pmid:integer}',
-                         name='Publication lookup pmid',
-                         GET=PubmedPublication)
 
-# Lists of publication
+# Lists of publications
 application.add_resource('/year/{year:integer}',
                          name='Publication list year',
                          GET=Year)
@@ -97,6 +102,9 @@ application.add_resource('/tag/{tag}',
                          GET=Tag)
 
 # Other resources
+application.add_resource('/xref/{xref}',
+                         name='Publication lookup xref',
+                         GET=XrefPublication)
 application.add_resource('/search',
                          name='Publication search',
                          GET=Search)

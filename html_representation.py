@@ -95,9 +95,6 @@ class PublicationsListMixin(object):
             published = publication.get('published')
             if published:
                 info.append(published)
-            info.append(A(self.get_icon('information'),
-                          'Details',
-                          href=publication['href']))
             link = self.get_xdb_link(publication, 'pubmed',
                                      title='PubMed',
                                      icon='pubmed')
@@ -108,8 +105,11 @@ class PublicationsListMixin(object):
                                      icon='xref')
             if link:
                 info.append(link)
-            info = TABLE(TR(TH(self.safe(publication['title']))),
-                         TR(TD(self.format_authors(publication['authors']))),
+            info = TABLE(TR(TD(A(self.get_icon('information'),
+                                 href=publication['href'])),
+                            TH(self.safe(publication['title']))),
+                         TR(TD(rowspan=2),
+                            TD(self.format_authors(publication['authors']))),
                          TR(TD(', '.join([str(i) for i in info]))))
             rows.append(TR(TD(info)))
         if count:

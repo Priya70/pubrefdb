@@ -39,9 +39,9 @@ class DocumentSaver(object):
                     pass
         else:
             self.doc['_id'] = uuid.uuid4().hex
-        if self.entitytype and not self.doc.has_key('entitytype'):
-            self.doc['entitytype'] = self.entitytype
-            self.doc['created'] = now()
+            if self.entitytype and not self.doc.has_key('entitytype'):
+                self.doc['entitytype'] = self.entitytype
+                self.doc['created'] = now()
 
     def __enter__(self):
         return self.doc

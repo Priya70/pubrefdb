@@ -94,37 +94,19 @@ class Publication(MethodMixin, GET):
             ops.append(dict(title='Delete',
                             href=request.url,
                             method='DELETE'))
+            ops.append(dict(title='Exclude',
+                            href=request.get_url('exclude')))
         return ops
 
     def get_data_resource(self, request):
-        self.publication['files'] = self.get_publication_files(self.publication['iui'],
-                                                               request.get_url)
+        self.publication['files'] = \
+            self.get_publication_files(self.publication['iui'],
+                                       request.get_url)
         return self.publication
 
 
-class EditMixin(object):
-
-    def is_accessible(self):
-        "Is the login user allowed to access this method of the resource?"
-        return self.is_login_admin()
-
-    def set_current(self, request):
-        self.set_current_publication(request)
-
-
-class DeletePublication(EditMixin, MethodMixin, RedirectMixin, DELETE):
-    "Delete the publication."
-
-    def process(self, request):
-        iui = self.publication['_id']
-        shutil.rmtree(os.path.join(configuration.DATA_DIR, iui),
-                      ignore_errors=True)
-        del self.db[iui]
-        self.set_redirect(request.application.url)
-
-
-class EditPublication(EditMixin, MethodMixin, GET):
-    "Display edit form for basic fields of a publication."
+class InputPublication(MethodMixin, GET):
+    "Display input form for adding a publication."
 
     outreprs = [JsonRepresentation,
                 TextRepresentation,
@@ -156,13 +138,137 @@ class EditPublication(EditMixin, MethodMixin, GET):
                           descr='Publication pages in journal issue.'),
               StringField('published', title='Published',
                           required=True, length=10, maxlength=10,
-                          descr='Date of publication. Use ISO format'
-                          " 'YYYY-MM-DD' with 00 for unknown month or day."),
+                          descr="Date of publication. ISO format 'YYYY-MM-DD'"
+                          " using '00' to denote unknown month or day."),
               StringField('affiliation', title='Affiliation',
                           length=80, maxlength=1000,
                           descr='Affiliation of authors.'),
-              TextField('abstract', title='Abstract'),
-              HiddenField('rev',
+              TextField('abstract', title='Abstract')]
+    
+    def is_accessible(self):
+        "Is the login user allowed to access this method of the resource?"
+        return self.is_login_admin()
+
+    def get_data_resource(self, request):
+        values = dict(type='journal article')
+        return dict(title='Add publication',
+                    form=dict(title='Add publication',
+                              fields=self.get_data_fields(),
+                              values=values,
+                              label='Add',
+                              href=request.url,
+                              cancel=request.application.url))
+
+class AddPublication(MethodMixin, RedirectMixin, POST):
+    "Add the publication."
+
+    fields = InputPublication.fields
+
+    def process(self, request):
+        values = self.parse_fields(request)
+        try:
+            saver = PublicationSaver(self.db)
+        except ValueError, msg:
+            raise HTTP_BAD_REQUEST(str(msg))
+        with saver as doc:
+            doc['title'] = values['title']
+            authors = []
+            for author in [a.strip() for a in values.get('authors').split(',')]:
+                parts = author.split()
+                if len(parts) >=2:
+                    author = dict(lastname=' '.join(parts[:-1]),
+                                  initials=parts[-1])
+                    author['lastname_normalized'] = to_ascii(author['lastname'])
+                    author['initials_normalized'] = to_ascii(author['initials'])
+                else:
+                    author = dict(lastname=parts[0])
+                    author['lastname_normalized'] = to_ascii(author['lastname'])
+                authors.append(author)
+            doc['authors'] = authors
+            doc['type'] = values.get('type')
+            doc['journal'] = journal = dict()
+            journal['title'] = values.get('journal_title')
+            journal['abbreviation'] = values.get('journal_abbrev')
+            journal['volume'] = values.get('journal_volume')
+            journal['issue'] = values.get('journal_issue')
+            journal['pages'] = values.get('journal_pages')
+            doc['published'] = values.get('published')
+            doc['affiliation'] = values.get('affiliation')
+            doc['abstract']= values.get('abstract')
+            doc['xrefs'] = []
+            doc['hrefs'] = []
+        self.set_redirect(request.application.get_url(doc['_id']))
+
+
+class EditMixin(object):
+
+    def is_accessible(self):
+        "Is the login user allowed to access this method of the resource?"
+        return self.is_login_admin()
+
+    def set_current(self, request):
+        self.set_current_publication(request)
+
+
+class DeletePublication(EditMixin, MethodMixin, RedirectMixin, DELETE):
+    "Delete the publication, no questions asked."
+
+    def process(self, request):
+        iui = self.publication['_id']
+        shutil.rmtree(os.path.join(configuration.DATA_DIR, iui),
+                      ignore_errors=True)
+        del self.db[iui]
+        self.set_redirect(request.application.url)
+
+
+class VerifyExcludePublication(EditMixin, MethodMixin, GET):
+    "Verify that the publication is to be excluded."
+
+    outreprs = [JsonRepresentation,
+                TextRepresentation,
+                FormHtmlRepresentation]
+
+    fields = [CheckboxField('verify', title='Verify',
+                            required=True,
+                            descr='Really delete and exclude'
+                            ' this publication permanently?')]
+
+    def get_data_resource(self, request):
+        return dict(title="Exclude '%s'" % self.publication['title'],
+                    form=dict(title='Verify exclusion',
+                              fields=self.get_data_fields(),
+                              label='Exclude',
+                              href=request.url,
+                              cancel=request.get_url('..')))
+
+
+class ExcludePublication(EditMixin, MethodMixin, RedirectMixin, POST):
+    "Exclude the publication: add all xrefs to exclusion list, and delete."
+
+    fields = VerifyExcludePublication.fields
+
+    def process(self, request):
+        values = self.parse_fields(request)
+        if values.get('verify'):
+            shutil.rmtree(os.path.join(configuration.DATA_DIR,
+                                       self.publication['_id']),
+                          ignore_errors=True)
+            with PublicationSaver(self.db, doc=self.publication) as doc:
+                doc['entitytype'] = 'excluded'
+            self.set_redirect(request.application.url)
+        else:
+            self.set_redirect(request.get_url('..'))
+
+
+class EditPublication(EditMixin, MethodMixin, GET):
+    "Display edit form for basic fields of a publication."
+
+    outreprs = [JsonRepresentation,
+                TextRepresentation,
+                FormHtmlRepresentation]
+
+    fields = InputPublication.fields + \
+             [HiddenField('rev',
                           required=True,
                           descr='Couchdb document revision')]
 
@@ -226,7 +332,7 @@ class ModifyPublication(EditMixin, MethodMixin, RedirectMixin, POST):
             try:
                 journal = self.publication['journal']
             except KeyError:
-                journal = self.publication['journal'] = dict()
+                self.publication['journal'] = journal = dict()
             journal['title'] = values.get('journal_title')
             journal['abbreviation'] = values.get('journal_abbrev')
             journal['volume'] = values.get('journal_volume')
@@ -583,7 +689,9 @@ class ImportPubmedPublication(MethodMixin, RedirectMixin, POST):
     def process(self, request):
         values = self.parse_fields(request)
         pmid = values['pmid']
-        result = list(self.db.view('publication/pmid')[pmid])
+        if list(self.db.view('publication/excluded')[['pubmed', pmid]]):
+            raise HTTP_CONFLICT('PubMed id has been excluded!')
+        result = list(self.db.view('publication/xref')[['pubmed', pmid]])
         if result:
             iui = result[0].id
         else:
@@ -596,12 +704,16 @@ class ImportPubmedPublication(MethodMixin, RedirectMixin, POST):
         self.set_redirect(request.application.get_url(iui))
 
 
-class PubmedPublication(MethodMixin, RedirectMixin, GET):
-    "Look up the publication for the given PMID, and redirect."
+class XrefPublication(MethodMixin, RedirectMixin, GET):
+    "Look up the publication for the given xref, and redirect."
 
     def set_current(self, request):
-        view = self.db.view('publication/pmid')
-        result = list(view[request.variables['pmid']])
+        try:
+            xdb, xkey = request.variables['xref'].split(':', 1)
+        except ValueError:
+            raise HTTP_BAD_REQUEST('invalid xref')
+        view = self.db.view('publication/xref')
+        result = list(view[[xdb.lower(), xkey]])
         if len(result) != 1:
             raise HTTP_NOT_FOUND
         self.set_redirect(request.application.get_url(result[0].id))
