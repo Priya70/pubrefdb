@@ -108,6 +108,15 @@ class Article(object):
                 key = key.lower()
                 author[key] = value
                 author[key + '_normalized'] = to_ascii(value)
+            # For consortia and such, forename may be defined
+            # but not last name; fix this!
+            if not author.get('lastname'):
+                author['lastname'] = author.pop('forename')
+                author['forename'] = None
+                author['initials'] = None
+                author['lastname_normalized'] = author.pop('forename_normalized')
+                author['forename_normalized'] = None
+                author['initials_normalized'] = None
             if author:
                 result.append(author)
         return result
@@ -130,7 +139,7 @@ class Article(object):
     def get_type(self, article):
         element = article.find('PublicationTypeList/PublicationType')
         if element is not None:
-            return ' '.join([t.capitalize() for t in element.text.split()])
+            return element.text.lower()
         else:
             return None
 

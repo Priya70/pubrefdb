@@ -51,6 +51,10 @@ application.add_resource('/{iui:uuid}/edit',
                          name='Publication edit',
                          GET=EditPublication,
                          POST=ModifyPublication)
+application.add_resource('/{iui:uuid}/xrefs',
+                         name='Publication xrefs',
+                         GET=EditPublicationXrefs,
+                         POST=ModifyPublicationXrefs)
 application.add_resource('/{iui:uuid}/hrefs',
                          name='Publication hrefs',
                          GET=EditPublicationHrefs,

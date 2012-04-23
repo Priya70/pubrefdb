@@ -7,10 +7,10 @@ function(doc) {
     var author, name;
     for (var i in doc.authors) {
 	au = doc.authors[i];
-	if (au.lastname_normalized) {
+	if (au.initials_normalized) {
 	    name = au.lastname_normalized + ' ' + au.initials_normalized;
 	} else {
-	    name = au.forename_normalized;
+	    name = au.lastname_normalized;
 	}
 	emit(name.toLowerCase(), doc._id);
     }

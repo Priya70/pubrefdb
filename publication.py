@@ -81,6 +81,8 @@ class Publication(MethodMixin, GET):
         if self.is_login_admin():
             ops.append(dict(title='Edit',
                             href=request.get_url('edit')))
+            ops.append(dict(title='Edit xrefs',
+                            href=request.get_url('xrefs')))
             ops.append(dict(title='Edit hrefs',
                             href=request.get_url('hrefs')))
             ops.append(dict(title='Edit tags',
@@ -130,22 +132,26 @@ class EditPublication(EditMixin, MethodMixin, GET):
 
     fields = [StringField('title', title='Title',
                           required=True, length=80, maxlength=1000),
+              TextField('authors', title='Authors',
+                        required=True, rows=2, cols=60,
+                        descr="Comma-separated author names, using "
+                        " format 'Lastname IN', where IN are the initials."),
               StringField('type', title='Type',
                           required=True,
                           descr='Publication type.'),
-              StringField('journal_title', 'Journal title',
+              StringField('journal_title', title='Journal title',
                           length=40,
                           descr='Full title of journal.'),
-              StringField('journal_abbrev', 'Abbrev title',
+              StringField('journal_abbrev', title='Abbrev title',
                           length=20,
                           descr='Abbreviated title of journal.'),
-              StringField('journal_volume', 'Volume',
+              StringField('journal_volume', title='Volume',
                           length=8,
                           descr='Journal volume.'),
-              StringField('journal_issue', 'Issue',
+              StringField('journal_issue', title='Issue',
                           length=8,
                           descr='Journal issue.'),
-              StringField('journal_pages', 'Pages',
+              StringField('journal_pages', title='Pages',
                           length=20,
                           descr='Publication pages in journal issue.'),
               StringField('published', title='Published',
@@ -162,14 +168,22 @@ class EditPublication(EditMixin, MethodMixin, GET):
 
     def get_data_resource(self, request):
         journal = self.publication.get('journal') or dict()
+        authors = []
+        for author in self.publication['authors']:
+            try:
+                authors.append("%(lastname)s %(initials)s" % author)
+            except KeyError:
+                authors.append(author['lastname'])
+        authors = ', '.join(authors)
         values = dict(title=self.publication['title'],
-                      type=self.publication['type'],
+                      authors=authors,
+                      type=self.publication.get('type'),
                       journal_title=journal.get('title'),
                       journal_abbrev=journal.get('abbreviation'),
                       journal_volume=journal.get('volume'),
                       journal_issue=journal.get('issue'),
                       journal_pages=journal.get('pages'),
-                      published=self.publication['published'],
+                      published=self.publication.get('published'),
                       affiliation=self.publication.get('affiliation'),
                       abstract=self.publication.get('abstract'),
                       rev=self.publication.get('_rev'))
@@ -195,6 +209,19 @@ class ModifyPublication(EditMixin, MethodMixin, RedirectMixin, POST):
             raise HTTP_BAD_REQUEST(str(msg))
         with saver:
             self.publication['title'] = values.get('title')
+            authors = []
+            for author in [a.strip() for a in values.get('authors').split(',')]:
+                parts = author.split()
+                if len(parts) >=2:
+                    author = dict(lastname=' '.join(parts[:-1]),
+                                  initials=parts[-1])
+                    author['lastname_normalized'] = to_ascii(author['lastname'])
+                    author['initials_normalized'] = to_ascii(author['initials'])
+                else:
+                    author = dict(lastname=parts[0])
+                    author['lastname_normalized'] = to_ascii(author['lastname'])
+                authors.append(author)
+            self.publication['authors'] = authors
             self.publication['type'] = values.get('type')
             try:
                 journal = self.publication['journal']
@@ -211,6 +238,71 @@ class ModifyPublication(EditMixin, MethodMixin, RedirectMixin, POST):
         self.set_redirect(request.get_url('..'))
 
 
+class EditPublicationXrefs(EditMixin, MethodMixin, GET):
+    "Display edit form for the xrefs of a publication."
+
+    outreprs = [JsonRepresentation,
+                TextRepresentation,
+                FormHtmlRepresentation]
+
+    fields = [MultiSelectField('remove', title='Xrefs',
+                               check=False, boxes=True,
+                               descr='Check xrefs to remove from the list.'),
+              StringField('add', title='Add xref',
+                          descr="Add a new xref. Format 'xdb:xkey'."),
+              HiddenField('rev',
+                          required=True,
+                          descr='Couchdb document revision')]
+
+    def get_data_resource(self, request):
+        options = []
+        for xref in self.publication['xrefs']:
+            options.append("%(xdb)s:%(xkey)s" % xref)
+        override = dict(remove=dict(options=options))
+        values = dict(rev=self.publication.get('_rev'))
+        return dict(title="Edit xrefs for '%s'" % self.publication['title'],
+                    form=dict(title='Edit publication xrefs',
+                              fields=self.get_data_fields(override=override),
+                              values=values,
+                              label='Save',
+                              href=request.url,
+                              cancel=request.get_url('..')))
+
+
+class ModifyPublicationXrefs(EditMixin, MethodMixin, RedirectMixin, POST):
+    "Modify the xrefs of the publication."
+
+    fields = EditPublicationXrefs.fields
+
+    def process(self, request):
+        values = self.parse_fields(request)
+        try:
+            saver = PublicationSaver(self.db, self.publication, values)
+        except ValueError, msg:
+            raise HTTP_BAD_REQUEST(str(msg))
+        with saver:
+            xrefs = self.publication['xrefs']
+            for remove in values.get('remove') or []:
+                for i, xref in enumerate(xrefs):
+                    if not xref: continue
+                    xref = "%(xdb)s:%(xkey)s" % xref
+                    if xref == remove:
+                        xrefs[i] = None
+            self.publication['xrefs'] = [x for x in xrefs if x]
+            xref = values.get('add')
+            if xref:
+                try:
+                    xdb, xkey = xref.split(':', 1)
+                except ValueError:
+                    raise HTTP_BAD_REQUEST('invalid new xref value')
+                for xref in self.publication['xrefs']:
+                    if xref['xdb'] == xdb and xref['xkey'] == xkey:
+                        break
+                else:
+                    self.publication['xrefs'].append(dict(xdb=xdb, xkey=xkey))
+        self.set_redirect(request.get_url('..'))
+
+
 class EditPublicationHrefs(EditMixin, MethodMixin, GET):
     "Display edit form for the hrefs of a publication."
 
@@ -220,11 +312,11 @@ class EditPublicationHrefs(EditMixin, MethodMixin, GET):
 
     fields = [MultiSelectField('remove', title='Hrefs',
                                check=False, boxes=True,
-                               descr='Check the hrefs to remove from the list.'),
+                               descr='Check hrefs to remove from the list.'),
               StringField('add', title='Add href',
-                          descr='Add a new href; this must be its URL.'),
+                          descr='The URL if a new href.'),
               StringField('title', title='Title',
-                          descr='The title for the href to add. Optional.'),
+                          descr='The optional title for a new href.'),
               HiddenField('rev',
                           required=True,
                           descr='Couchdb document revision')]
@@ -411,16 +503,16 @@ class EditPublicationFile(EditMixin, MethodMixin, GET):
                 TextRepresentation,
                 FormHtmlRepresentation]
 
-    fields = [MultiSelectField('delete', title='Delete',
+    fields = [MultiSelectField('remove', title='Remove',
                                boxes=True, check=False,
-                               descr='Delete the checked attached files.'),
+                               descr='Check attached files to remove.'),
               FileField('attach', title='Attach',
                         descr='Attach the given file.')]
 
     def get_data_resource(self, request):
         files = self.get_publication_files(self.publication['_id'],
                                            request.get_url)
-        override = dict(delete=dict(options=[f['filename'] for f in files]))
+        override = dict(remove=dict(options=[f['filename'] for f in files]))
         return dict(title='Edit attached files',
                     form=dict(title='Edit attached files',
                               fields=self.get_data_fields(override=override),
@@ -438,7 +530,7 @@ class ModifyPublicationFile(EditMixin, MethodMixin, RedirectMixin, POST):
         iui = self.publication['_id']
         datadir = os.path.join(configuration.DATA_DIR, iui)
         values = self.parse_fields(request)
-        filenames = values.get('delete') or []
+        filenames = values.get('remove') or []
         for filename in filenames:
             filename = filename.lstrip('./~') # Remove dangerous characters
             os.remove(os.path.join(datadir, filename))
