@@ -22,18 +22,18 @@ class PublicationHtmlRepresentation(HtmlRepresentation):
         table = TABLE(TR(TH('Authors'),
                          TD(self.format_authors(self.data['authors']))),
                       TR(TH('Type'),
-                         TD(self.data.get('type'))),
+                         TD(self.safe(self.data.get('type')))),
                       TR(TH('Journal'),
                          TD(self.format_journal(self.data.get('journal')))),
                       TR(TH('Published'),
-                         TD(self.data.get('published') or '-')),
+                         TD(self.safe(self.data.get('published') or '-'))),
                       TR(TH('Affiliation'),
-                         TD(self.data.get('affiliation') or '-')),
+                         TD(self.safe(self.data.get('affiliation') or '-'))),
                       TR(TH('Abstract'),
-                         TD(self.data.get('abstract') or '-')),
+                         TD(self.safe(self.data.get('abstract') or '-'))),
                       TR(TH('Tags'),
                          TD(self.format_tags(self.data.get('tags')))),
-                      klass='details')
+                      klass='publication')
         url = self.data.get('alt_href')
         if url:
             table.append(TR(TH('Slug URL'),

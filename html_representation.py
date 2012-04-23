@@ -42,19 +42,20 @@ class HtmlRepresentation(BaseHtmlRepresentation):
             except KeyError:
                 result.append(name)
             else:
-                result.append(str(A(name, href=url)))
+                result.append(str(A(self.safe(name), href=url)))
         return ', '.join(result)
 
     def format_journal(self, journal):
         if not journal: return '-'
-        return "%s, %s (%s) %s" % (journal['abbreviation'] or journal['title'],
-                                   B(journal['volume'] or '-'),
-                                   journal['issue'] or '-',
-                                   journal['pages'] or '-')
+        title = self.safe(journal['abbreviation'] or journal['title'])
+        volume = self.safe(journal['volume'] or '-')
+        issue = self.safe(journal['issue'] or '-')
+        pages = self.safe(journal['pages'] or '-')
+        return "%s, %s (%s) %s" % (title, B(volume), issue, pages)
 
     def format_tags(self, tags):
         if not tags: return '-'
-        return ', '.join(tags)
+        return self.safe(', '.join(tags))
 
     def get_xdb_link(self, publication, xdb, title=None, icon=None):
         xdb = xdb.lower()
@@ -65,8 +66,11 @@ class HtmlRepresentation(BaseHtmlRepresentation):
 
     def get_xref_link(self, xref, title=None, icon=None):
         xdb = xref['xdb']
-        if not title:
+        if title is None:
             title = "%(xdb)s:%(xkey)s" % xref
+        elif not title:
+            title = ''
+        title = self.safe(title)
         try:
             url = configuration.XDB_URL[xdb.lower()]
         except KeyError:
@@ -84,35 +88,33 @@ class PublicationsListMixin(object):
     def get_publications_list(self, count=True):
         rows = []
         for publication in self.data['publications']:
-            details = []
+            info = []
             journal = publication.get('journal')
             if journal:
-                details.append(self.format_journal(journal))
+                info.append(self.format_journal(journal))
             published = publication.get('published')
             if published:
-                details.append(published)
-            links = []
+                info.append(published)
+            info.append(A(self.get_icon('information'),
+                          'Details',
+                          href=publication['href']))
             link = self.get_xdb_link(publication, 'pubmed',
-                                     title='PubMed', icon='pubmed')
+                                     title='PubMed',
+                                     icon='pubmed')
             if link:
-                links.append(str(link))
+                info.append(link)
             link = self.get_xdb_link(publication, 'doi',
-                                     title='Article', icon='xref')
+                                     title='Article',
+                                     icon='xref')
             if link:
-                links.append(str(link))
-            rows.append(TR(TD(TABLE(
-                TR(TD(A(self.get_icon('information'),
-                        href=publication['href'])),
-                   TD(B(self.safe(publication['title'])),
-                      ' ',
-                      ' '.join(links))),
-                TR(TD(rowspan=2),
-                   TD(self.format_authors(publication['authors']))),
-                TR(TD(', '.join(details))),
-                klass='publication'))))
+                info.append(link)
+            info = TABLE(TR(TH(self.safe(publication['title']))),
+                         TR(TD(self.format_authors(publication['authors']))),
+                         TR(TD(', '.join([str(i) for i in info]))))
+            rows.append(TR(TD(info)))
         if count:
             rows.insert(0, TD(I("%s publications" % len(rows))))
-        return TABLE(*rows)
+        return TABLE(klass='publications', *rows)
 
 
 class PublicationsListHtmlRepresentation(PublicationsListMixin,

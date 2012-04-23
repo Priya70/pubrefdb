@@ -164,18 +164,20 @@ table.params td {vertical-align: top;
                  text-align: left;
                  padding-left: 1em; }
 
-table.publication {margin-top: 0.5em; }
-table.publication th {text-align: left;
-                      margin: 0; }
-table.publication td {padding: 0;
-                      padding-right: 0.5em; }
-table.publication a {font-weight: normal; }
+table.publications table {margin-top: 0.8em; }
 
-table.details th {vertical-align: top;
-                  text-align: right;
-                  white-space: nowrap; }
-table.details td {vertical-align: top;
-                  padding-left: 0.5em; }
+table.publications th {text-align: left;
+                       vertical-align: middle; }
+table.publications td {vertical-align: middle; }
+table.publications img {vertical-align: middle; }
+table.publications a {font-weight: normal;
+                      white-space: nowrap; }
+
+table.publication th {vertical-align: top;
+                      text-align: right;
+                      white-space: nowrap; }
+table.publication td {vertical-align: top;
+                      padding-left: 0.5em; }
 
 a.xref {white-space: nowrap; }
 
