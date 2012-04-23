@@ -23,7 +23,7 @@ class EditPiList(MethodMixin, GET):
                           " where IN are the initials, and a blank"
                           " separates the name and initials."),
               StringField('affiliation', title='Affiliation',
-                          length=60,
+                          length=60, maxlength=1000,
                           descr='Affiliation of the added/updated PI.'
                           ' A comma-separated list of affiliation strings'
                           ' to be used for the automated reference searches.'),
@@ -66,7 +66,9 @@ class ModifyPiList(MethodMixin, RedirectMixin, POST):
             doc = self.db['pilist']
         except couchdb.http.ResourceNotFound:
             doc = dict(pis=[])
-        pis = dict([(pi['name'], pi['affiliation']) for pi in doc['pis']])
+        pis = dict()
+        for pi in doc['pis']:
+            pis[to_ascii(pi['name'])] = pi
         values = self.parse_fields(request)
         try:
             saver = MetadataSaver(self.db, doc=doc, values=values)
@@ -93,9 +95,9 @@ class ModifyPiList(MethodMixin, RedirectMixin, POST):
             pass
         else:
             name = to_ascii(name)
-            affiliation = values.get('affiliation') or ''
-            pis[name] = affiliation.strip()
+            pis[name] = dict(name=name,
+                             normalized_name=to_ascii(name),
+                             affiliation=values.get('affiliation') or '')
         with saver:
-            doc['pis'] = [dict(name=key, affiliation=pis[key])
-                          for key in sorted(pis.keys())]
+            doc['pis'] = [pis[key] for key in sorted(pis.keys())]
         self.set_redirect(request.get_url())

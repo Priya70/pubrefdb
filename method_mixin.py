@@ -124,12 +124,10 @@ class MethodMixin(LoginMixin):
             pass
         else:
             pis = doc['pis']
-            pis.sort(lambda i, j: cmp(i['normalized_name'].lower(),
-                                      j['normalized_name'].lower()))
+            pis.sort(lambda i, j: cmp(i['name'].lower(), j['name'].lower()))
             for pi in pis:
                 name = pi['name']
-                normalized_name = pi['normalized_name']
-                url = get_url('author', normalized_name.replace(' ', '_'))
+                url = get_url('author', to_ascii(name).replace(' ', '_'))
                 links.append(dict(title="PIs: %s" % name, href=url))
         for item in self.db.view('publication/tags', group=True):
             links.append(dict(title="Tags: %s" % item.key,
