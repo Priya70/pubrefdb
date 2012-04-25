@@ -170,8 +170,9 @@ table.publications th {text-align: left;
                        vertical-align: middle; }
 table.publications td {vertical-align: middle; }
 table.publications img {vertical-align: middle; }
-table.publications a {font-weight: normal;
-                      white-space: nowrap; }
+table.publications table th a {font-weight: bold;
+                               color: black; }
+table.publications table td a {font-weight: normal; }
 
 table.publication th {vertical-align: top;
                       text-align: right;

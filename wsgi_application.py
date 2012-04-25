@@ -71,6 +71,9 @@ application.add_resource('/{iui:uuid}/file',
                          name='Publication edit file',
                          GET=EditPublicationFile,
                          POST=ModifyPublicationFile)
+application.add_resource('/{iui:uuid}/pubmed',
+                         name='Publication update PubMed',
+                         POST=UpdatePubmedPublication)
 application.add_resource('/{iui:uuid}/file/{filepath:path}',
                          name='Publication file',
                          GET=PublicationFile)

@@ -125,6 +125,7 @@ class Article(object):
         result = dict()
         element = article.find('Journal')
         if element is not None:
+            result['issn'] = element.findtext('ISSN')
             result['title'] = element.findtext('Title')
             result['abbreviation'] = element.findtext('ISOAbbreviation')
             issue = element.find('JournalIssue')
@@ -253,10 +254,10 @@ def test2():
 
 
 if __name__ == '__main__':
-    url = PUBMED_FETCH_URL % '22505579'
+    url = PUBMED_FETCH_URL % '22157069'
     infile = urllib.urlopen(url)
     data = infile.read()
-    open('data/groth_2012.xml', 'w').write(data)
+    open('data/falhammar_2012.xml', 'w').write(data)
     ## import json
     ## root = xml.etree.ElementTree.fromstring(open('data/borgstrom_2011.xml').read())
     ## article = Article()

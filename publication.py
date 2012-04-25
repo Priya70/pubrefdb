@@ -91,6 +91,12 @@ class Publication(MethodMixin, GET):
                             href=request.get_url('slug')))
             ops.append(dict(title='Edit files',
                             href=request.get_url('file')))
+            for xref in self.publication['xrefs']:
+                if xref['xdb'].lower() == 'pubmed':
+                    ops.append(dict(title='Update from PubMed',
+                                    href=request.get_url('pubmed'),
+                                    method='POST'))
+                    break
             ops.append(dict(title='Delete',
                             href=request.url,
                             method='DELETE'))
@@ -584,6 +590,29 @@ class ModifyPublicationSlug(EditMixin, MethodMixin, RedirectMixin, POST):
                 raise HTTP_CONFLICT("slug '%s' already in use")
             self.publication['slug'] = slug or None
         self.set_redirect(request.get_url('..'))
+
+
+class UpdatePubmedPublication(EditMixin, RedirectMixin, MethodMixin, POST):
+    """Update the entry from information in PubMed.
+    Currently only the journal information (name, volume, issue, pages)
+    is updated."""
+
+    def is_accessible(self):
+        "Is the login user allowed to access this method of the resource?"
+        return self.is_login_admin()
+
+    def process(self, request):
+        for xref in self.publication['xrefs']:
+            if xref['xdb'].lower() == 'pubmed':
+                break
+        else:
+            raise HTTP_BAD_REQUEST('publication has no PubMed xref')
+        article = pubmed.Article(xref['xkey'])
+        if not article.pmid:
+            raise HTTP_BAD_REQUEST("no article with PMID %s" % pmid)
+        with PublicationSaver(self.db, doc=self.publication) as doc:
+            doc['journal'] = article.journal
+        self.set_redirect(request.application.get_url(doc['_id']))
 
 
 class PublicationFile(MethodMixin, File):

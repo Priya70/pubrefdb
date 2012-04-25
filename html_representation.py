@@ -105,13 +105,13 @@ class PublicationsListMixin(object):
                                      icon='xref')
             if link:
                 info.append(link)
-            info = TABLE(TR(TD(A(self.get_icon('information'),
-                                 href=publication['href'])),
-                            TH(self.safe(publication['title']))),
-                         TR(TD(rowspan=2),
-                            TD(self.format_authors(publication['authors']))),
-                         TR(TD(', '.join([str(i) for i in info]))))
-            rows.append(TR(TD(info)))
+            table = TABLE(TR(TH(A(self.get_icon('page'),
+                                  ' ',
+                                  self.safe(publication['title']),
+                                  href=publication['href']))),
+                          TR(TD(self.format_authors(publication['authors']))),
+                          TR(TD(', '.join([str(i) for i in info]))))
+            rows.append(TR(TD(table)))
         if count:
             rows.insert(0, TD(I("%s publications" % len(rows))))
         return TABLE(klass='publications', *rows)
