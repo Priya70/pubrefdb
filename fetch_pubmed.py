@@ -55,14 +55,15 @@ if __name__ == '__main__':
     names = set([a.lower().replace('_', ' ') for a in sys.argv[1:]])
     if names:
         for i, pi in enumerate(pis):
-            if pi['normalized_name'].lower() not in names:
+            name = pi.get('normalized_name', pi['name'])
+            if name.lower() not in names:
                 pis[i] = None
         pis = [pi for pi in pis if pi is not None]
-    pis = [(pi['normalized_name'],
+    pis = [(pi.get('normalized_name', pi['name']),
             [a.strip() for a in pi['affiliation'].split(',')])
            for pi in pis]
+    total = 0
     for pi, affiliations in pis:
-        time.sleep(DELAY)
         pmids = fetch_pmids(db, pi, years, affiliations)
         count_all = len(pmids)
         count_new = 0
@@ -70,3 +71,7 @@ if __name__ == '__main__':
             if add_publication(db, pmid):
                 count_new += 1
         print pi, ':', count_all, 'found,', count_new, 'added'
+        total += count_new
+        if pi != pis[-1]:
+            time.sleep(DELAY)
+    print total, 'added in total'
