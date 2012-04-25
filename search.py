@@ -23,6 +23,7 @@ class Search(MethodMixin, GET):
 
     outreprs = [JsonRepresentation,
                 TextRepresentation,
+                AtomRepresentation,
                 SearchHtmlRepresentation]
 
     fields = [StringField('terms', title='Terms')]

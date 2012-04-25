@@ -11,6 +11,7 @@ class Author(MethodMixin, GET):
 
     outreprs = [JsonRepresentation,
                 TextRepresentation,
+                AtomRepresentation,
                 PublicationsListHtmlRepresentation]
 
     def get_data_resource(self, request):

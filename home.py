@@ -11,6 +11,7 @@ class Home(MethodMixin, GET):
 
     outreprs = [JsonRepresentation,
                 TextRepresentation,
+                AtomRepresentation,
                 PublicationsListHtmlRepresentation]
 
     def get_data_operations(self, request):

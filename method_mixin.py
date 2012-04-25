@@ -18,6 +18,7 @@ from wrapid.text_representation import TextRepresentation
 
 from . import configuration
 from .html_representation import *
+from .atom_representation import *
 
 
 class MethodMixin(LoginMixin):
