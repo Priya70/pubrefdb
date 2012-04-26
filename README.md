@@ -34,3 +34,6 @@ packages are needed:
 
 The [CouchDB database system](http://couchdb.apache.org/) (version 1.0.1
 or later) is used as storage back-end in the current implementation.
+
+An example installation can be viewed at
+[http://publications.scilifelab.se/](http://publications.scilifelab.se/).

@@ -38,7 +38,15 @@ class PublicationHtmlRepresentation(HtmlRepresentation):
         if url:
             table.append(TR(TH('Slug URL'),
                             TD(A(url, href=url))))
+        hreftable = TABLE()
+        for href in self.data['hrefs']:
+            url = href['href']
+            hreftable.append(TR(TD(A(href.get('title') or url, href=url))))
+        if len(hreftable) == 0:
+            hreftable.append(TR(TD('-')))
         files = self.data.get('files')
+        table.append(TR(TH('Links'),
+                        TD(hreftable)))
         filetable = TABLE()
         for file in files:
             filename = file['filename']
@@ -54,13 +62,9 @@ class PublicationHtmlRepresentation(HtmlRepresentation):
         return table
 
     def get_metadata(self):
-        table = TABLE()
+        table = TABLE(TR(TH('External databases')))
         for xref in self.data['xrefs']:
             table.append(TR(TD(self.get_xref_link(xref))))
-        for href in self.data['hrefs']:
-            url = href['href']
-            title = href.get('title') or url
-            table.append(TR(TD(A(title, href=url))))
         return table
 
 
@@ -81,16 +85,16 @@ class Publication(MethodMixin, GET):
         if self.is_login_admin():
             ops.append(dict(title='Edit',
                             href=request.get_url('edit')))
-            ops.append(dict(title='Edit xrefs',
-                            href=request.get_url('xrefs')))
-            ops.append(dict(title='Edit hrefs',
-                            href=request.get_url('hrefs')))
             ops.append(dict(title='Edit tags',
                             href=request.get_url('tags')))
             ops.append(dict(title='Edit slug',
                             href=request.get_url('slug')))
+            ops.append(dict(title='Edit links',
+                            href=request.get_url('hrefs')))
             ops.append(dict(title='Edit files',
                             href=request.get_url('file')))
+            ops.append(dict(title='Edit xrefs',
+                            href=request.get_url('xrefs')))
             for xref in self.publication['xrefs']:
                 if xref['xdb'].lower() == 'pubmed':
                     ops.append(dict(title='Update from PubMed',
@@ -445,7 +449,7 @@ class EditPublicationHrefs(EditMixin, MethodMixin, GET):
             options.append(dict(value=href['href'], title=title))
         override = dict(remove=dict(options=options))
         values = dict(rev=self.publication.get('_rev'))
-        return dict(title="Edit hrefs for '%s'" % self.publication['title'],
+        return dict(title="Edit links for '%s'" % self.publication['title'],
                     form=dict(title='Edit publication hrefs',
                               fields=self.get_data_fields(override=override),
                               values=values,

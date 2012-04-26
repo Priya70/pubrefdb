@@ -93,7 +93,6 @@ class Article(object):
         self.xrefs = self.get_xrefs(tree)
         if self.pmid is None:
             pmid = tree.findtext('MedlineCitation/PMID')
-            print 'PMID', pmid
             self.xrefs.append(dict(xdb='pubmed', xkey=pmid))
 
     def get_authors(self, authorlist):

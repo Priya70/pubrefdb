@@ -19,9 +19,9 @@ class DocumentSaver(object):
 
     entitytype = None
 
-    def __init__(self, db, doc=dict(), values=dict(), force=False):
+    def __init__(self, db, doc=None, values=dict(), force=False):
         self.db = db
-        self.doc = doc
+        self.doc = doc or dict()
         if self.doc.has_key('_id'):
             if values:
                 try:
