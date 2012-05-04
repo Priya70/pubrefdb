@@ -17,6 +17,17 @@ class HtmlRepresentation(BaseHtmlRepresentation):
     favicon     = 'static/favicon.ico'
     stylesheets = ['static/standard.css']
 
+    def get_head(self):
+        head = super(HtmlRepresentation, self).get_head()
+        for outrepr in self.data.get('outreprs', []):
+            if outrepr['mimetype'] == 'application/atom+xml':
+                head.append(LINK(rel='alternate',
+                                 type=outrepr['mimetype'],
+                                 title='Atom feed',
+                                 href=outrepr['href']))
+                break
+        return head
+
     def get_icon(self, name):
         return IMG(src=self.get_url('static', "%s.png" % name),
                    alt=name, title=name, width=16, height=16)

@@ -721,7 +721,7 @@ class ImportPubmedPublication(MethodMixin, RedirectMixin, POST):
 
     def process(self, request):
         values = self.parse_fields(request)
-        pmid = values['pmid']
+        pmid = values['pmid'].strip()
         if list(self.db.view('publication/excluded')[['pubmed', pmid]]):
             raise HTTP_CONFLICT('PubMed id has been excluded!')
         result = list(self.db.view('publication/xref')[['pubmed', pmid]])
