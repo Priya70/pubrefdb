@@ -9,9 +9,8 @@ import uuid
 
 from wrapid.file import File
 
-from .method_mixin import *
-from pubrefdb import pubmed
-from pubrefdb import mimeutils
+from .base import *
+from . import pubmed
 from .database import PublicationSaver
 
 

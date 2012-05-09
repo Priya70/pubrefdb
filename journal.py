@@ -3,7 +3,7 @@
 List of journals in the database.
 """
 
-from .method_mixin import *
+from .base import *
 from .database import MetadataSaver
 
 

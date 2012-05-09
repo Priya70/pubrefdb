@@ -3,7 +3,7 @@
 List of publications during one year.
 """
 
-from .method_mixin import *
+from .base import *
 
 
 class Year(MethodMixin, GET):

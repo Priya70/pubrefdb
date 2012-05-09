@@ -3,7 +3,7 @@
 Search for publications.
 """
 
-from .method_mixin import *
+from .base import *
 
 
 class SearchHtmlRepresentation(FormHtmlMixin,

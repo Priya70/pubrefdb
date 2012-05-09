@@ -3,8 +3,6 @@
 General HTML representation class.
 """
 
-import logging
-
 from wrapid.html_representation import *
 
 from . import configuration

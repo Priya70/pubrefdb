@@ -3,7 +3,7 @@
 List of publications for one author.
 """
 
-from .method_mixin import *
+from .base import *
 
 
 class Author(MethodMixin, GET):

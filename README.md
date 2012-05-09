@@ -26,8 +26,6 @@ packages are needed:
   Source code for the **PubRefDb** system.
 - [https://github.com/pekrau/wrapid](https://github.com/pekrau/wrapid):
   Package **wrapid** providing the web service framework.
-- [https://github.com/pekrau/hypertext](https://github.com/pekrau/hypertext):
-  Package **HyperText** for producing the HTML of the web service interface.
 - [https://github.com/pekrau/whoyou](https://github.com/pekrau/whoyou):
   Package **WhoYou** providing basic authentication services.
   This can in principle be exchanged for another system.

@@ -3,7 +3,7 @@
 List of publications having a given tag.
 """
 
-from .method_mixin import *
+from .base import *
 
 
 class Tag(MethodMixin, GET):

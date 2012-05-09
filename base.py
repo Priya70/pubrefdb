@@ -1,6 +1,6 @@
 """ PubRefDb: Web application for a database of publications.
 
-Mixin class for methods: authentication and database connection.
+Base and mixin classes.
 """
 
 import logging
@@ -17,6 +17,7 @@ from wrapid.json_representation import JsonRepresentation
 from wrapid.text_representation import TextRepresentation
 
 from . import configuration
+from . import mimeutils
 from .html_representation import *
 from .atom_representation import *
 

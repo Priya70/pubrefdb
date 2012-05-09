@@ -3,7 +3,7 @@
 Home page; list of most recent publications.
 """
 
-from .method_mixin import *
+from .base import *
 
 
 class Home(MethodMixin, GET):

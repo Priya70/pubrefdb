@@ -3,7 +3,7 @@
 Edit list of PIs (authors for navigation menu links).
 """
 
-from .method_mixin import *
+from .base import *
 from .database import MetadataSaver
 
 
