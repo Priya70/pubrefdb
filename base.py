@@ -134,6 +134,8 @@ class MethodMixin(LoginMixin):
         for item in self.db.view('publication/tags', group=True):
             links.append(dict(title="Tags: %s" % item.key,
                               href=get_url('tag', item.key)))
+        links.append(dict(title='Recently modified',
+                          href=get_url('modified')))
         links.append(dict(title='Journals',
                           href=get_url('journals')))
         links.append(dict(title='Documentation: About',

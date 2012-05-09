@@ -751,6 +751,18 @@ class XrefPublication(MethodMixin, RedirectMixin, GET):
         self.set_redirect(request.application.get_url(result[0].id))
 
 
+class PubmedPublication(MethodMixin, RedirectMixin, GET):
+    "Look up the publication for the given PubMed ID, and redirect."
+
+    def set_current(self, request):
+        pmid = request.variables['pmid']
+        view = self.db.view('publication/xref')
+        result = list(view[['pubmed', pmid]])
+        if len(result) != 1:
+            raise HTTP_NOT_FOUND
+        self.set_redirect(request.application.get_url(result[0].id))
+
+
 class SlugPublication(MethodMixin, RedirectMixin, GET):
     "Look up the publication for the given slug, and redirect."
 
