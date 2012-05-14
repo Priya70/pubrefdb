@@ -176,7 +176,7 @@ class MethodMixin(LoginMixin):
             try:
                 name = "%(lastname)s_%(initials)s" % author
             except KeyError:
-                name = author['forename']
+                name = author.get('forename', 'unknown')
             name = name.replace(' ', '_')
             name = to_ascii(name)
             author['href'] = get_url('author', name)

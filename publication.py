@@ -590,7 +590,7 @@ class ModifyPublicationSlug(EditMixin, MethodMixin, RedirectMixin, POST):
             if slug and \
                slug != self.publication.get('slug') and \
                self.get_docs('publication/slug', slug):
-                raise HTTP_CONFLICT("slug '%s' already in use")
+                raise HTTP_CONFLICT("slug '%s' already in use" % slug)
             self.publication['slug'] = slug or None
         self.set_redirect(request.get_url('..'))
 

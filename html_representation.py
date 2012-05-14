@@ -45,7 +45,7 @@ class HtmlRepresentation(BaseHtmlRepresentation):
             try:
                 name = "%(lastname)s %(initials)s" % author
             except KeyError:
-                name = author['forename']
+                name = author.get('forename', 'unknown')
             try:
                 url = author['href']
             except KeyError:
