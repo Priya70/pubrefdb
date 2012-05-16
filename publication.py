@@ -30,6 +30,8 @@ class PublicationHtmlRepresentation(HtmlRepresentation):
                          TD(self.safe(self.data.get('affiliation') or '-'))),
                       TR(TH('Abstract'),
                          TD(self.safe(self.data.get('abstract') or '-'))),
+                      TR(TH('Comment'),
+                         TD(self.safe(self.data.get('comment') or '-'))),
                       TR(TH('Tags'),
                          TD(self.format_tags(self.data.get('tags')))),
                       klass='publication')
@@ -152,7 +154,8 @@ class InputPublication(MethodMixin, GET):
               StringField('affiliation', title='Affiliation',
                           length=80, maxlength=1000,
                           descr='Affiliation of authors.'),
-              TextField('abstract', title='Abstract')]
+              TextField('abstract', title='Abstract'),
+              TextField('comment', title='Comment')]
     
     def is_accessible(self):
         "Is the login user allowed to access this method of the resource?"
@@ -204,6 +207,7 @@ class AddPublication(MethodMixin, RedirectMixin, POST):
             doc['published'] = values.get('published')
             doc['affiliation'] = values.get('affiliation')
             doc['abstract']= values.get('abstract')
+            doc['comment']= values.get('comment')
             doc['xrefs'] = []
             doc['hrefs'] = []
         self.set_redirect(request.application.get_url(doc['_id']))
@@ -301,6 +305,7 @@ class EditPublication(EditMixin, MethodMixin, GET):
                       published=self.publication.get('published'),
                       affiliation=self.publication.get('affiliation'),
                       abstract=self.publication.get('abstract'),
+                      comment=self.publication.get('comment'),
                       rev=self.publication.get('_rev'))
         return dict(title="Edit '%s'" % self.publication['title'],
                     form=dict(title='Edit publication',
@@ -350,6 +355,7 @@ class ModifyPublication(EditMixin, MethodMixin, RedirectMixin, POST):
             self.publication['published'] = values.get('published')
             self.publication['affiliation'] = values.get('affiliation')
             self.publication['abstract']= values.get('abstract')
+            self.publication['comment']= values.get('comment')
         self.set_redirect(request.get_url('..'))
 
 
