@@ -1,6 +1,6 @@
 /* PubRefDb: Publication database web application.
-   Reduce function to obtain all distinct journals (title abbrev), and count.
+   Reduce function to obtain all distinct journals (title abbrev) for count.
 */
-function(key, values, rereduce) {
+function(keys, values, rereduce) {
     return sum(values);
 }

@@ -1,5 +1,5 @@
 /* PubRefDb: Publication database web application.
-   Index publication documents by journal title (abbreviated), allowing count.
+   Index publication documents by journal title (abbreviated) for count.
    Value: 1.
 */
 function(doc) {

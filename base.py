@@ -6,7 +6,6 @@ Base and mixin classes.
 import logging
 import os
 import uuid
-import time
 
 import couchdb
 
@@ -117,9 +116,12 @@ class MethodMixin(LoginMixin):
         get_url = request.application.get_url
         links = [dict(title='Search',
                       href=get_url('search'))]
-        for year in xrange(2010, time.localtime().tm_year+1):
+        view = self.db.view('publication/years', group=True)
+        years = dict([(int(r.key), r.value) for r in view])
+        for year in reversed(sorted(years.keys())):
             links.append(dict(title="Year: %s" % year,
-                              href=get_url('year', str(year))))
+                              href=get_url('year', str(year)),
+                              count=years[year]))
         try:
             doc = self.db['pilist']
         except couchdb.http.ResourceNotFound:
@@ -129,8 +131,9 @@ class MethodMixin(LoginMixin):
             pis.sort(lambda i, j: cmp(i['name'].lower(), j['name'].lower()))
             for pi in pis:
                 name = pi['name']
-                url = get_url('author', to_ascii(name).replace(' ', '_'))
-                links.append(dict(title="PIs: %s" % name, href=url))
+                key = to_ascii(name).lower().replace(' ', '_')
+                links.append(dict(title="PIs: %s" % name,
+                                  href=get_url('author', key)))
         for item in self.db.view('publication/tags', group=True):
             links.append(dict(title="Tags: %s" % item.key,
                               href=get_url('tag', item.key)))

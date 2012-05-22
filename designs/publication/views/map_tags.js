@@ -1,5 +1,5 @@
 /* PubRefDb: Publication database web application.
-   Index publication documents by tag, allowing count.
+   Index publication documents by tag for count.
    Value: 1.
 */
 function(doc) {

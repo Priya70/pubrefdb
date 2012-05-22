@@ -1,6 +1,6 @@
 /* PubRefDb: Publication database web application.
    Index excluded publication documents by pubmed and doi xrefs (xdb + xkey).
-   Value: id.
+   Value: null.
 */
 function(doc) {
     if (doc.entitytype !== 'excluded') return;
@@ -11,7 +11,7 @@ function(doc) {
 	switch(xdb) {
 	case 'pubmed':
 	case 'doi': 
-	    emit([xdb, xref.xkey], doc._id);
+	    emit([xdb, xref.xkey], null);
 	    break;
 	}
     }

@@ -1,6 +1,6 @@
 /* PubRefDb: Publication database web application.
-   Index publication documents by author.
-   Value: null.
+   Index publication documents by author for count.
+   Value: 1.
 */
 function(doc) {
     if (doc.entitytype !== 'publication') return;
@@ -12,6 +12,6 @@ function(doc) {
 	} else {
 	    name = au.lastname_normalized;
 	}
-	emit(name.toLowerCase(), null);
+	emit(name.toLowerCase(), 1);
     }
 }

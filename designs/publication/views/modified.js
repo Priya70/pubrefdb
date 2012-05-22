@@ -1,8 +1,8 @@
 /* PubRefDb: Publication database web application.
    Index publication documents by modified date.
-   Value: id.
+   Value: null.
 */
 function(doc) {
     if (doc.entitytype !== 'publication') return;
-    emit(doc.modified, doc._id);
+    emit(doc.modified, null);
 }
