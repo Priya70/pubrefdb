@@ -201,7 +201,8 @@ class MethodMixin(LoginMixin):
             ##         pass
             ## except KeyError:
             ##     name = author.get('forename', 'unknown')
-            author['href'] = get_url('author', to_ascii(name.replace(' ', '_')))
+            name = to_ascii(name.replace(' ', '_')).lower()
+            author['href'] = get_url('author', name)
         return publication
 
     def sort_publications(self, publications):
