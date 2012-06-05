@@ -107,13 +107,23 @@ class Article(object):
                 key = key.lower()
                 author[key] = value
                 author[key + '_normalized'] = to_ascii(value)
-            # For consortia and such, forename may be defined
-            # but not last name; fix this!
+            # For consortia and such, names are a mess. Try to sort out.
             if not author.get('lastname'):
-                author['lastname'] = author.pop('forename')
+                try:
+                    author['lastname'] = author.pop('forename')
+                except KeyError:
+                    value = element.findtext('CollectiveName')
+                    if not value: continue # Give up.
+                    if not isinstance(value, unicode):
+                        value = unicode(value, 'utf-8')
+                    author['lastname'] = value
                 author['forename'] = None
                 author['initials'] = None
-                author['lastname_normalized'] = author.pop('forename_normalized')
+                author['lastname_normalized'] = to_ascii(author['lastname'])
+                try:
+                    author.pop('forename_normalized')
+                except KeyError:
+                    pass
                 author['forename_normalized'] = None
                 author['initials_normalized'] = None
             if author:
@@ -253,10 +263,10 @@ def test2():
 
 
 if __name__ == '__main__':
-    url = PUBMED_FETCH_URL % '22157069'
+    url = PUBMED_FETCH_URL % '21572409'
     infile = urllib.urlopen(url)
     data = infile.read()
-    open('data/falhammar_2012.xml', 'w').write(data)
+    open('data/colwill_2011.xml', 'w').write(data)
     ## import json
     ## root = xml.etree.ElementTree.fromstring(open('data/borgstrom_2011.xml').read())
     ## article = Article()

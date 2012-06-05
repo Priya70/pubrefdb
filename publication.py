@@ -287,15 +287,9 @@ class EditPublication(EditMixin, MethodMixin, GET):
 
     def get_data_resource(self, request):
         journal = self.publication.get('journal') or dict()
-        authors = []
-        for author in self.publication['authors']:
-            try:
-                authors.append("%(lastname)s %(initials)s" % author)
-            except KeyError:
-                authors.append(author['lastname'])
-        authors = ', '.join(authors)
         values = dict(title=self.publication['title'],
-                      authors=authors,
+                      authors=', '.join([get_author_name(a)
+                                         for a in self.publication['authors']]),
                       type=self.publication.get('type'),
                       journal_title=journal.get('title'),
                       journal_abbrev=journal.get('abbreviation'),

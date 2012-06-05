@@ -54,9 +54,10 @@ class AtomRepresentation(XmlRepresentation):
     def authors_element(self, authors):
         for author in authors:
             self.builder.start('author', {})
+            name = author['lastname']
             try:
-                name = "%(initials)s %(lastname)s" % author
+                name = author['initials'] + ' ' + name
             except KeyError:
-                name = author['lastname']
+                pass
             self.simple_element('name', name)
             self.builder.end('author')

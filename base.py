@@ -21,6 +21,22 @@ from .html_representation import *
 from .atom_representation import *
 
 
+def get_author_name(author):
+    "Get the full name representation from the author dictionary."
+    try:
+        name = author['lastname']
+        if not name: raise KeyError
+        try:
+            initials = author['initials']
+            if not initials: raise KeyError
+            name += ' ' + initials
+        except KeyError:
+            pass
+    except KeyError:
+        name = author.get('forename', 'unknown')
+    return name
+
+
 class MethodMixin(LoginMixin):
     "Mixin class for Method subclasses; database connect and authentication."
 
@@ -176,13 +192,16 @@ class MethodMixin(LoginMixin):
             publication['alt_href'] = get_url(slug)
         publication.pop('_attachments', None)
         for author in publication['authors']:
-            try:
-                name = "%(lastname)s_%(initials)s" % author
-            except KeyError:
-                name = author.get('forename', 'unknown')
-            name = name.replace(' ', '_')
-            name = to_ascii(name)
-            author['href'] = get_url('author', name)
+            name = get_author_name(author)
+            ## try:
+            ##     name = author['lastname']
+            ##     try:
+            ##         name += '_' + author['initials']
+            ##     except KeyError:
+            ##         pass
+            ## except KeyError:
+            ##     name = author.get('forename', 'unknown')
+            author['href'] = get_url('author', to_ascii(name.replace(' ', '_')))
         return publication
 
     def sort_publications(self, publications):

@@ -39,13 +39,11 @@ class HtmlRepresentation(BaseHtmlRepresentation):
             return self.get_icon(filename)
 
     def format_authors(self, authors):
+        from .base import get_author_name
         if not authors: return '-'
         result = []
         for author in authors:
-            try:
-                name = "%(lastname)s %(initials)s" % author
-            except KeyError:
-                name = author.get('forename', 'unknown')
+            name = get_author_name(author)
             try:
                 url = author['href']
             except KeyError:
