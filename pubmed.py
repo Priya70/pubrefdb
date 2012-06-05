@@ -97,6 +97,7 @@ class Article(object):
 
     def get_authors(self, authorlist):
         result = []
+        existing = set()                # Handle pathological multi-mention.
         for element in authorlist.findall('Author'):
             author = dict()
             for key in ['LastName', 'ForeName', 'Initials']:
@@ -127,7 +128,10 @@ class Article(object):
                 author['forename_normalized'] = None
                 author['initials_normalized'] = None
             if author:
-                result.append(author)
+                key = "%(lastname)s %(forename)s" % author
+                if key not in existing:
+                    result.append(author)
+                    existing.add(key)
         return result
 
     def get_journal(self, article):
@@ -263,10 +267,10 @@ def test2():
 
 
 if __name__ == '__main__':
-    url = PUBMED_FETCH_URL % '21572409'
+    url = PUBMED_FETCH_URL % '20393554'
     infile = urllib.urlopen(url)
     data = infile.read()
-    open('data/colwill_2011.xml', 'w').write(data)
+    open('data/hudson_2010.xml', 'w').write(data)
     ## import json
     ## root = xml.etree.ElementTree.fromstring(open('data/borgstrom_2011.xml').read())
     ## article = Article()
