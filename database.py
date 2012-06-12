@@ -63,7 +63,7 @@ class MetadataSaver(DocumentSaver):
 
 
 def load_pilist(db):
-    "Load the first version of the PI list."
+    "Load the PI list, if not already done."
     if db.get('pilist'): return
     # Get the list from a CSV file
     doc = dict(_id='pilist',

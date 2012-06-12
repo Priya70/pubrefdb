@@ -163,7 +163,7 @@ class MethodMixin(LoginMixin):
                           href=get_url('doc')))
         return links
 
-    def get_docs(self, indexname, key, last=None, **kwargs):
+    def get_docs(self, indexname, key, last=None, distinct=True, **kwargs):
         """Get the list of documents using the named index
         and the given key or interval.
         """
@@ -175,7 +175,13 @@ class MethodMixin(LoginMixin):
             iterator = view[key]
         else:
             iterator = view[key:last]
-        return [dict(i.doc) for i in iterator]
+        result = []
+        lookup = set()
+        for item in iterator:
+            if distinct and item.id in lookup: continue
+            result.append(item.doc)
+            lookup.add(item.id)
+        return result
 
     def normalize_publication(self, publication, get_url):
         """Normalize the contents of the publication:

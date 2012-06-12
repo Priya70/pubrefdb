@@ -17,7 +17,8 @@ class Author(MethodMixin, GET):
     def get_data_resource(self, request):
         author = request.variables['author']
         author_normalized = to_ascii(author)
-        author_normalized = author_normalized.replace('_', ' ').lower()
+        author_normalized = author_normalized.lower()
+        author_normalized = author_normalized.replace('_', ' ')
         publications = self.get_docs('publication/author',
                                      author_normalized,
                                      author_normalized + 'Z')
