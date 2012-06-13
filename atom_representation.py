@@ -52,12 +52,9 @@ class AtomRepresentation(XmlRepresentation):
         self.builder.end('link')
 
     def authors_element(self, authors):
+        from .base import get_author_name
         for author in authors:
             self.builder.start('author', {})
-            name = author['lastname']
-            try:
-                name = author['initials'] + ' ' + name
-            except KeyError:
-                pass
+            name = get_author_name(author)
             self.simple_element('name', name)
             self.builder.end('author')

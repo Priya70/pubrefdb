@@ -199,14 +199,6 @@ class MethodMixin(LoginMixin):
         publication.pop('_attachments', None)
         for author in publication['authors']:
             name = get_author_name(author)
-            ## try:
-            ##     name = author['lastname']
-            ##     try:
-            ##         name += '_' + author['initials']
-            ##     except KeyError:
-            ##         pass
-            ## except KeyError:
-            ##     name = author.get('forename', 'unknown')
             name = to_ascii(name.replace(' ', '_')).lower()
             author['href'] = get_url('author', name)
         return publication
