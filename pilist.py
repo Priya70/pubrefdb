@@ -94,10 +94,10 @@ class ModifyPiList(MethodMixin, RedirectMixin, POST):
         except KeyError:
             pass
         else:
-            name = to_ascii(name)
-            pis[name] = dict(name=name,
-                             normalized_name=to_ascii(name),
-                             affiliation=values.get('affiliation') or '')
+            normalized_name = to_ascii(name)
+            pis[normalized_name] = dict(name=name,
+                                        normalized_name=normalized_name,
+                                        affiliation=values.get('affiliation') or '')
         with saver:
             doc['pis'] = [pis[key] for key in sorted(pis.keys())]
         self.set_redirect(request.get_url())

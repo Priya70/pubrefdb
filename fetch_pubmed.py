@@ -63,7 +63,12 @@ if __name__ == '__main__':
             [a.strip() for a in pi['affiliation'].split(',')])
            for pi in pis]
     total = 0
+    first = True
     for pi, affiliations in pis:
+        if first:
+            first = False
+        else:
+            time.sleep(DELAY)
         pmids = fetch_pmids(db, pi, years, affiliations)
         count_all = len(pmids)
         count_new = 0
@@ -72,6 +77,4 @@ if __name__ == '__main__':
                 count_new += 1
         print pi, ':', count_all, 'found,', count_new, 'added'
         total += count_new
-        if pi != pis[-1]:
-            time.sleep(DELAY)
     print total, 'added in total'
