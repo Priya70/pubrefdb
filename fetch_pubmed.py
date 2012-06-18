@@ -7,6 +7,26 @@ from pubrefdb import pubmed
 from pubrefdb import configuration
 from pubrefdb.database import PublicationSaver
 
+
+def get_pis_affiliations(db, explicit=[]):
+    """Get the list of (PI name, affiliations).
+    If any explicit names given (e.g. from command-line arguments),
+    then pick only those from the db.
+    Else get all.
+    """
+    pis = db['pilist']['pis']
+    # If any names given on command line, then check only those
+    names = set([n.lower().replace('_', ' ') for n in explicit])
+    if names:
+        for i, pi in enumerate(pis):
+            name = pi.get('normalized_name', pi['name'])
+            if name.lower() not in names:
+                pis[i] = None
+        pis = [pi for pi in pis if pi is not None]
+    return [(pi.get('normalized_name', pi['name']),
+             [a.strip() for a in pi['affiliation'].split(',')])
+            for pi in pis]
+
 def fetch_pmids(db, pi, years, affiliations):
     """Get the PMIDs for publications involving the given PI
     at the given affiliations for the specified years.
@@ -45,26 +65,13 @@ if __name__ == '__main__':
     import time
 
     DELAY = 10
+    db = configuration.get_db()
 
     year = time.localtime().tm_year
-    ## years = range(2010, year+1)
     years = range(year-1, year+1)
-    db = configuration.get_db()
-    pis = db['pilist']['pis']
-    # If any names given on command line, then check only those
-    names = set([a.lower().replace('_', ' ') for a in sys.argv[1:]])
-    if names:
-        for i, pi in enumerate(pis):
-            name = pi.get('normalized_name', pi['name'])
-            if name.lower() not in names:
-                pis[i] = None
-        pis = [pi for pi in pis if pi is not None]
-    pis = [(pi.get('normalized_name', pi['name']),
-            [a.strip() for a in pi['affiliation'].split(',')])
-           for pi in pis]
     total = 0
     first = True
-    for pi, affiliations in pis:
+    for pi, affiliations in get_pis_affiliations(db, sys.argv[1:]):
         if first:
             first = False
         else:

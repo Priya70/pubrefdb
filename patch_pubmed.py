@@ -15,15 +15,23 @@ def is_incomplete(db, doc):
     published = doc.get('published') or ''
     parts = published.split('-')
     if len(parts) < 3: return True
-    if parts[2] == '00': return True
     if parts[1] == '00': return True
+    # Do not bother about day in month.
+    journal = doc.get('journal')
+    if not journal: return True
+    if not journal.get('volume'): return True
+    # Do not bother about issue; may not exist for some journals.
+    if not journal.get('pages'): return True
     return False
 
 def patch_publication(db, pmid):
     article = pubmed.Article(pmid)
     if not article.pmid: return
     view = db.view('publication/xref', include_docs=True)
-    results = list(view[['pubmed', pmid]])
+    print pmid
+    print view[pmid]
+    results = list(view[pmid])
+    print results
     with PublicationSaver(db, doc=results[0].doc) as doc:
         doc['type'] = article.type
         doc['published'] = article.published
@@ -46,11 +54,15 @@ def get_ids(db, indexname, key, last=None, **kwargs):
     
 
 if __name__ == '__main__':
+    import sys
     import time
+
     DELAY = 10
     db = configuration.get_db()
+
     for item in db.view('publication/xref')[['pubmed'] : ['pubmed', 'ZZZZZZ']]:
-        doc = db[item.value]
+        doc = db[item.id]
         if is_incomplete(db, doc):
+            print doc['title']
             patch_publication(db, item.key)
             time.sleep(DELAY)
