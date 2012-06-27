@@ -11,9 +11,16 @@ from . import configuration
 class HtmlRepresentation(BaseHtmlRepresentation):
     "Base class for HTML representation of the resource."
 
-    logo        = 'static/scilifelab_logo_small.png'
+    logo        = configuration.HOME_LOGO
     favicon     = 'static/favicon.ico'
     stylesheets = ['static/standard.css']
+
+    def get_logo(self):
+        "Allow link to other than application itself."
+        logo = super(HtmlRepresentation, self).get_logo()
+        if configuration.HOME_URL:
+            logo['href'] = configuration.HOME_URL
+        return logo
 
     def get_head(self):
         head = super(HtmlRepresentation, self).get_head()

@@ -82,7 +82,8 @@ class Publication(MethodMixin, GET):
                                    request.application.get_url)
 
     def get_data_operations(self, request):
-        ops = super(Publication, self).get_data_operations(request)
+        "For admin login: edit operations."
+        ops = []
         if self.is_login_admin():
             ops.append(dict(title='Edit',
                             href=request.get_url('edit')))

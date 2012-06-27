@@ -106,7 +106,7 @@ def publication_is_incomplete(db, doc):
     journal = doc.get('journal')
     if not journal: return True
     if not journal.get('volume'): return True
-    # Do not bother about issue; may not exist for some journals.
+    # Do not bother about issue; is undefined for some journals.
     if not journal.get('pages'): return True
     return False
 
@@ -127,6 +127,8 @@ def patch_publication(db, pmid, log):
 if __name__ == '__main__':
     import sys
     db = configuration.get_db()
-    total = fetch(db, sys.argv[1:])
+    pinames = sys.argv[1:]
+    total = fetch(db, pinames)
     print total, 'added in total'
-    patch(db)
+    if not pinames:
+        patch(db)

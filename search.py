@@ -28,12 +28,6 @@ class Search(MethodMixin, GET):
 
     fields = [StringField('terms', title='Terms')]
 
-    def get_data_operations(self, request):
-        ops = []
-        if self.is_login_admin():
-            ops.extend(self.get_data_main_operations(request))
-        return ops
-
     def get_data_resource(self, request):
         values = self.parse_fields(request)
         publications = []

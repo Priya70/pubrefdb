@@ -15,17 +15,18 @@ class Home(MethodMixin, GET):
                 PublicationsListHtmlRepresentation]
 
     def get_data_operations(self, request):
-        ops = []
+        "For admin login: Edit PI list."
+        ops = super(Home, self).get_data_operations(request)
         if self.is_login_admin():
-            ops.extend(self.get_data_main_operations(request))
+            ops.append(dict(title='Edit PI list',
+                            href=request.application.get_url('pilist')))
         return ops
 
     def get_data_resource(self, request):
-        LIMIT = 10
         publications = self.get_docs('publication/published',
                                      '9999', last='0',
                                      descending=True,
-                                     limit=LIMIT)
+                                     limit=configuration.MOST_RECENT_LIMIT)
         # Already sorted by the index
         for publication in publications:
             self.normalize_publication(publication, request.application.get_url)

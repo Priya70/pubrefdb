@@ -22,6 +22,10 @@ HOST = dict(title='SciLifeLab tools',
 COUCHDB_SERVER   = 'http://localhost:5984/'
 COUCHDB_DATABASE = 'pubrefdb'
 
+HOME_LOGO = None                        # Default: application name.
+HOME_URL = None                         # Default: application home.
+MOST_RECENT_LIMIT = 20                  # Number of most recent publications.
+
 DATA_DIR = '/var/local/pubrefdb'
 
 DATE_FORMAT     = '%Y-%m-%d'

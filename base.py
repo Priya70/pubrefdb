@@ -115,27 +115,27 @@ class MethodMixin(LoginMixin):
         if 'PubRefDb' in self.login['teams']: return True
         return False
 
-    def get_data_main_operations(self, request):
-        """Get the links for the main-level operations:
-        adding publication, importing from PubMed, editing the PI list.
-        Only for admin team login.
-        """
-        return [dict(title='Add publication',
-                     href=request.application.get_url('publication')),
-                dict(title='PubMed import',
-                     href=request.application.get_url('pubmed')),
-                dict(title='Edit PI list',
-                     href=request.application.get_url('pilist'))]
+    def get_data_operations(self, request):
+        "For admin login: Add publications."
+        ops = []
+        if self.is_login_admin():
+            ops.append(dict(title='Add publication',
+                            href=request.application.get_url('publication')))
+            ops.append(dict(title='PubMed import',
+                            href=request.application.get_url('pubmed')))
+        return ops
 
     def get_data_links(self, request):
         "Return the links response data."
         get_url = request.application.get_url
-        links = [dict(title='Search',
+        links = [dict(title='Most recent',
+                      href=get_url()),
+                 dict(title='Search',
                       href=get_url('search'))]
         view = self.db.view('publication/years', group=True)
         years = dict([(int(r.key), r.value) for r in view])
         for year in reversed(sorted(years.keys())):
-            links.append(dict(title="Year: %s" % year,
+            links.append(dict(title="Year (all PIs): %s" % year,
                               href=get_url('year', str(year)),
                               count=years[year]))
         try:
