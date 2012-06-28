@@ -128,10 +128,17 @@ class MethodMixin(LoginMixin):
     def get_data_links(self, request):
         "Return the links response data."
         get_url = request.application.get_url
-        links = [dict(title='Most recent',
-                      href=get_url()),
-                 dict(title='Search',
-                      href=get_url('search'))]
+        links = []
+        if configuration.PARENT_URL:
+            link = dict(href=configuration.PARENT_URL,
+                        title=configuration.PARENT_TITLE or 'Parent page')
+            if configuration.PARENT_LOGO:
+                link['image'] = configuration.PARENT_LOGO
+            links.append(link)
+        links.append(dict(title='Most recent',
+                          href=get_url()))
+        links.append(dict(title='Search',
+                          href=get_url('search')))
         view = self.db.view('publication/years', group=True)
         years = dict([(int(r.key), r.value) for r in view])
         for year in reversed(sorted(years.keys())):

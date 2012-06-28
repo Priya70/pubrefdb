@@ -16,17 +16,18 @@ import couchdb
 
 DEBUG = False
 
-HOST = dict(title='SciLifeLab tools',
-            href='http://localhost/')
+HOST = None                       # Dict(href, title, admin, email)
+
+PARENT_URL = None                 # URL to parent page, if any
+PARENT_TITLE = None               # Parent page title, if any
+PARENT_LOGO = None                # URL for image for parent page, if any.
 
 COUCHDB_SERVER   = 'http://localhost:5984/'
 COUCHDB_DATABASE = 'pubrefdb'
 
-HOME_LOGO = None                        # Default: application name.
-HOME_URL = None                         # Default: application home.
-MOST_RECENT_LIMIT = 20                  # Number of most recent publications.
-
 DATA_DIR = '/var/local/pubrefdb'
+
+MOST_RECENT_LIMIT = 20            # Number of most recent publications.
 
 DATE_FORMAT     = '%Y-%m-%d'
 DAY_FORMAT      = '%A %d %B %Y'
