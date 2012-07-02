@@ -155,7 +155,7 @@ class MethodMixin(LoginMixin):
             for pi in pis:
                 name = pi['name']
                 key = to_ascii(name).lower().replace(' ', '_')
-                links.append(dict(title="PIs: %s" % name,
+                links.append(dict(title="Principal Investigator: %s" % name,
                                   href=get_url('author', key)))
         for item in self.db.view('publication/tags', group=True):
             links.append(dict(title="Tags: %s" % item.key,
@@ -164,9 +164,9 @@ class MethodMixin(LoginMixin):
                           href=get_url('modified')))
         links.append(dict(title='Journals',
                           href=get_url('journals')))
-        links.append(dict(title='Documentation: About',
+        links.append(dict(title='This application: About',
                           href=get_url('about')))
-        links.append(dict(title='Documentation: API',
+        links.append(dict(title='This application: API',
                           href=get_url('doc')))
         return links
 
