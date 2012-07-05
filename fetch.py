@@ -31,7 +31,6 @@ def fetch(db, pinames=[], years=[], delay=10.0):
     if not years:
         year = time.localtime().tm_year
         years = range(year-1, year+1)
-    doc['created'] = now()
     doc['pis'] = []
     doc['years'] = years
     try:
@@ -57,6 +56,7 @@ def fetch(db, pinames=[], years=[], delay=10.0):
             doc['pis'].append(record)
     except Exception, message:
         doc['error'] = traceback.format_exc(limit=20)
+    doc['created'] = now()
     db.save(doc)
 
 def get_pis_affiliations(db, explicit=[]):
