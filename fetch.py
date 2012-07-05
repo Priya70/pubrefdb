@@ -55,7 +55,6 @@ def fetch(db, pinames=[], years=[], delay=10.0):
                 if add_publication(db, pmid):
                     record['added'].append(pmid)
             doc['pis'].append(record)
-            raise ValueError, 'test error'
     except Exception, message:
         doc['error'] = traceback.format_exc(limit=20)
     db.save(doc)

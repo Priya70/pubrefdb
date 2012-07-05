@@ -765,7 +765,7 @@ class FetchedHtmlRepresentation(HtmlRepresentation):
                             TD(', '.join([str(A(p['pmid'], href=p['href']))
                                           for p in pi.get('added', [])]))))
         return DIV(error,
-                   P("Fetched %s" % fetched['created']),
+                   P("Fetched %s" % fetched.get('created')),
                    table)
 
 
