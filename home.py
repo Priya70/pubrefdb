@@ -14,14 +14,6 @@ class Home(MethodMixin, GET):
                 AtomRepresentation,
                 PublicationsListHtmlRepresentation]
 
-    def get_data_operations(self, request):
-        "For admin login: Edit PI list."
-        ops = super(Home, self).get_data_operations(request)
-        if self.is_login_admin():
-            ops.append(dict(title='Edit PI list',
-                            href=request.application.get_url('pilist')))
-        return ops
-
     def get_data_resource(self, request):
         publications = self.get_docs('publication/published',
                                      '9999', last='0',

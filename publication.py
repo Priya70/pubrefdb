@@ -172,6 +172,7 @@ class InputPublication(MethodMixin, GET):
                               href=request.url,
                               cancel=request.application.url))
 
+
 class AddPublication(MethodMixin, RedirectMixin, POST):
     "Add the publication."
 
@@ -598,8 +599,9 @@ class ModifyPublicationSlug(EditMixin, MethodMixin, RedirectMixin, POST):
 
 class UpdatePubmedPublication(EditMixin, RedirectMixin, MethodMixin, POST):
     """Update the entry from information in PubMed.
-    Currently only the journal information (name, volume, issue, pages)
-    is updated."""
+    Currently updates publication type, publication date, and
+    journal information (name, volume, issue, pages).
+    """
 
     def is_accessible(self):
         "Is the login user allowed to access this method of the resource?"
@@ -614,9 +616,14 @@ class UpdatePubmedPublication(EditMixin, RedirectMixin, MethodMixin, POST):
         article = pubmed.Article(xref['xkey'])
         if not article.pmid:
             raise HTTP_BAD_REQUEST("no article with PMID %s" % pmid)
-        with PublicationSaver(self.db, doc=self.publication) as doc:
-            doc['journal'] = article.journal
-        self.set_redirect(request.application.get_url(doc['_id']))
+        if self.publication['type'] != article.type or \
+           self.publication['published'] != article.published or \
+           self.publication['journal'] != article.journal:
+            with PublicationSaver(self.db, doc=self.publication) as doc:
+                doc['type'] = article.type
+                doc['published'] = article.published
+                doc['journal'] = article.journal
+        self.set_redirect(request.application.get_url(self.publication['_id']))
 
 
 class PublicationFile(MethodMixin, File):
@@ -702,10 +709,10 @@ class InputPubmedPublication(MethodMixin, GET):
         return self.is_login_admin()
 
     def get_data_resource(self, request):
-        return dict(title='Import publication',
-                    form=dict(title='Import publication from PubMed',
+        return dict(title='Import publication from PubMed',
+                    form=dict(title='Import publication by PubMed identifier',
                               fields=self.get_data_fields(),
-                              label='Add',
+                              label='PubMed import',
                               href=request.url,
                               cancel=request.application.url))
 
@@ -735,6 +742,59 @@ class ImportPubmedPublication(MethodMixin, RedirectMixin, POST):
                 doc.update(article.get_data())
                 iui = doc['_id']
         self.set_redirect(request.application.get_url(iui))
+
+
+class FetchedHtmlRepresentation(HtmlRepresentation):
+    "Display data for fetced publications."
+
+    def get_content(self):
+        fetched = self.data['fetched']
+        try:
+            error = PRE(fetched['error'])
+        except KeyError:
+            error = ''
+        table = TABLE(TR(TH('PI'),
+                         TH('Count'),
+                         TH('Added')),
+                      klass='data')
+        pis = fetched.get('pis', [])
+        pis.sort(lambda i, j: cmp(i['name'], j['name']))
+        for pi in pis:
+            table.append(TR(TD(pi['name']),
+                            TD(str(pi['count']), klass='integer'),
+                            TD(', '.join([str(A(p['pmid'], href=p['href']))
+                                          for p in pi.get('added', [])]))))
+        return DIV(error,
+                   P("Fetched %s" % fetched['created']),
+                   table)
+
+
+class FetchedPubmedPublications(MethodMixin, GET):
+    "Display results of most recent PubMed fetch."
+
+    outreprs = [JsonRepresentation,
+                TextRepresentation,
+                FetchedHtmlRepresentation]
+
+    def is_accessible(self):
+        "Is the login user allowed to access this method of the resource?"
+        return self.is_login_admin()
+
+    def get_data_resource(self, request):
+        try:
+            doc = self.db['fetched']
+        except:
+            doc = dict()
+        else:
+            del doc['_id']
+            del doc['_rev']
+            del doc['entitytype']
+            get_url = request.application.get_url
+            for pi in doc['pis']:
+                pi['added'] = [dict(pmid=a, href=get_url('pubmed', a))
+                               for a in pi.get('added', [])]
+        return dict(title='New publications fetched from PubMed',
+                    fetched=doc)
 
 
 class XrefPublication(MethodMixin, RedirectMixin, GET):

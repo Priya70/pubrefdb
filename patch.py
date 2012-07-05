@@ -1,7 +1,9 @@
 """ PubRefDb: Publication database web application.
 
-Update the database from PubMed.
-Try to patch existing incomplete entries.
+Update the database from PubMed; try to patch existing incomplete entries.
+
+NOTE: This should really be done via the operation 'Update from PubMed'
+in the web interface.
 """
 
 import time

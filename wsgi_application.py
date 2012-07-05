@@ -86,10 +86,13 @@ application.add_resource('/publication',
                          name='Publication add',
                          GET=InputPublication,
                          POST=AddPublication)
-application.add_resource('/pubmed',
-                         name='Publication import',
+application.add_resource('/pubmed/import',
+                         name='Publication PubMed import',
                          GET=InputPubmedPublication,
                          POST=ImportPubmedPublication)
+application.add_resource('/pubmed/fetched',
+                         name='Publications PubMed fetched',
+                         GET=FetchedPubmedPublications)
 
 # Lists of publications
 application.add_resource('/modified',

@@ -1,3 +1,3 @@
 " PubRefDb: Publication database web application."
 
-__version__ = '12.5'
+__version__ = '12.7'

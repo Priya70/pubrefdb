@@ -87,9 +87,9 @@ class MethodMixin(LoginMixin):
         try:
             self.publication = dict(self.db[request.variables['iui']])
         except couchdb.http.ResourceNotFound:
-            return HTTP_NOT_FOUND
+            raise HTTP_NOT_FOUND
         if self.publication['entitytype'] != 'publication':
-            return HTTP_NOT_FOUND
+            raise HTTP_NOT_FOUND
 
     def check_access(self, realm):
         """Check that login account may access this resource.
@@ -115,16 +115,6 @@ class MethodMixin(LoginMixin):
         if 'PubRefDb' in self.login['teams']: return True
         return False
 
-    def get_data_operations(self, request):
-        "For admin login: Add publications."
-        ops = []
-        if self.is_login_admin():
-            ops.append(dict(title='Add publication',
-                            href=request.application.get_url('publication')))
-            ops.append(dict(title='PubMed import',
-                            href=request.application.get_url('pubmed')))
-        return ops
-
     def get_data_links(self, request):
         "Return the links response data."
         get_url = request.application.get_url
@@ -139,6 +129,15 @@ class MethodMixin(LoginMixin):
                           href=get_url()))
         links.append(dict(title='Search',
                           href=get_url('search')))
+        if self.is_login_admin():
+            links.append(dict(title='Administration: Edit PI list',
+                              href=get_url('pilist')))
+            links.append(dict(title='Administration: Add publication',
+                              href=get_url('publication')))
+            links.append(dict(title='Administration:PubMed import',
+                              href=get_url('pubmed', 'import')))
+            links.append(dict(title='Administration:PubMed fetched',
+                              href=get_url('pubmed', 'fetched')))
         view = self.db.view('publication/years', group=True)
         years = dict([(int(r.key), r.value) for r in view])
         for year in reversed(sorted(years.keys())):
