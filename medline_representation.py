@@ -2,7 +2,6 @@
 
 MEDLINE text representation class for publication and publications list.
 
-XXX DP: Date of publication (with month 3-letter silliness)
 XXX FAU: full author name
 """
 
@@ -117,6 +116,7 @@ class MedlineRepresentation(TextRepresentation):
         result.append("%-4s- %s" % (symbol, value))
 
     def multiline(self, result, symbol, value, maxlength=82):
+        if not value: return
         lines = []
         line = []
         count = 0
