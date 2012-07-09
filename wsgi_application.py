@@ -13,8 +13,9 @@ import pubrefdb
 from pubrefdb import configuration
 from pubrefdb.home import *
 from pubrefdb.publication import *
-from pubrefdb.year import *
 from pubrefdb.modified import *
+from pubrefdb.incomplete import *
+from pubrefdb.year import *
 from pubrefdb.author import *
 from pubrefdb.journal import *
 from pubrefdb.tag import *
@@ -95,15 +96,18 @@ application.add_resource('/pubmed/fetched',
                          GET=FetchedPubmedPublications)
 
 # Lists of publications
-application.add_resource('/modified',
-                         name='Publication list modified',
-                         GET=Modified)
 application.add_resource('/year/{year:integer}',
                          name='Publication list year',
                          GET=Year)
 application.add_resource('/author/{author}',
                          name='Publication list author',
                          GET=Author)
+application.add_resource('/modified',
+                         name='Publication list modified',
+                         GET=Modified)
+application.add_resource('/incomplete',
+                         name='Publication list incomplete',
+                         GET=Incomplete)
 application.add_resource('/journals',
                          name='Journal list',
                          GET=Journals)
