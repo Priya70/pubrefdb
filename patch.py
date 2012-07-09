@@ -2,8 +2,8 @@
 
 Update the database from PubMed; try to patch existing incomplete entries.
 
-NOTE: This should really be done via the operation 'Update from PubMed'
-in the web interface.
+To be executed via cron, the command line or via the 'Update from PubMed'
+operation in the web interface.
 """
 
 import time
@@ -14,39 +14,22 @@ from pubrefdb.database import PublicationSaver
 
 
 def patch(db, delay=10.0, log=True):
-    """Loop through all PubMed publications and attempt to patch up
-    missing bits of information (type, published date, volume and pages).
+    """Loop through all incomplete publications having PubMed xref
+    and attempt to patch up missing bits of information:
+    type of publication, published date and journal information.
     """
-    for item in db.view('publication/xref')[['pubmed'] : ['pubmed', 'ZZZZZZ']]:
-        doc = db[item.id]
-        if publication_is_incomplete(db, doc):
-            pmid = item.key[1]
-            if log:
-                print 'Checking', pmid
-            patch_publication(db, pmid, log=log)
+    view = db.view('publication/incomplete', include_docs=True)
+    for item in view:
+        pmid = item.key
+        if log:
+            print 'Checking', pmid
+        article = pubmed.Article(pmid)
+        if article.pmid:
+            patch_publication(db, item.doc, article, log=log)
             time.sleep(delay)
 
-def publication_is_incomplete(db, doc):
-    assert doc['entitytype'] == 'publication'
-    if not doc.get('type'): return True
-    published = doc.get('published') or ''
-    parts = published.split('-')
-    if len(parts) < 3: return True
-    if parts[1] == '00': return True
-    # Do not bother about day in month.
-    journal = doc.get('journal')
-    if not journal: return True
-    if not journal.get('volume'): return True
-    # Do not bother about issue; is undefined for some journals.
-    if not journal.get('pages'): return True
-    return False
 
-def patch_publication(db, pmid, log):
-    article = pubmed.Article(pmid)
-    if not article.pmid: return
-    view = db.view('publication/xref', include_docs=True)
-    results = list(view[['pubmed', pmid]])
-    doc = results[0].doc
+def patch_publication(db, doc, article, log):
     if doc['type'] != article.type or \
        doc['published'] != article.published or \
        doc['journal'] != article.journal:

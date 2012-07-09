@@ -2,7 +2,8 @@
 
 Fetch new publications from PubMed.
 
-To be executed from within a cron script or from the command line.
+To be executed via cron script or the command line.
+
 The result is recorded in the document 'fetched' in the database.
 By default, loop over the current list of PIs for new publications and load.
 If command-line arguments given, then check only those PIs.

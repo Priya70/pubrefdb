@@ -4,13 +4,14 @@ List of publications for one author.
 """
 
 from .base import *
+from .medline_representation import MedlineRepresentation
 
 
 class Author(MethodMixin, GET):
     "List of publications for one author."
 
     outreprs = [JsonRepresentation,
-                TextRepresentation,
+                MedlineRepresentation,
                 AtomRepresentation,
                 PublicationsListHtmlRepresentation]
 

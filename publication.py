@@ -12,6 +12,8 @@ from wrapid.file import File
 from .base import *
 from . import pubmed
 from .database import PublicationSaver
+from .medline_representation import MedlineRepresentation
+from .patch import patch_publication
 
 
 class PublicationHtmlRepresentation(HtmlRepresentation):
@@ -73,7 +75,7 @@ class Publication(MethodMixin, GET):
     "Display information about a given publication."
 
     outreprs = [JsonRepresentation,
-                TextRepresentation,
+                MedlineRepresentation,
                 PublicationHtmlRepresentation]
 
     def set_current(self, request):
@@ -99,7 +101,7 @@ class Publication(MethodMixin, GET):
                             href=request.get_url('xrefs')))
             for xref in self.publication['xrefs']:
                 if xref['xdb'].lower() == 'pubmed':
-                    ops.append(dict(title='Update from PubMed',
+                    ops.append(dict(title='Pubmed update',
                                     href=request.get_url('pubmed'),
                                     method='POST'))
                     break
@@ -609,20 +611,13 @@ class UpdatePubmedPublication(EditMixin, RedirectMixin, MethodMixin, POST):
 
     def process(self, request):
         for xref in self.publication['xrefs']:
-            if xref['xdb'].lower() == 'pubmed':
-                break
+            if xref['xdb'].lower() == 'pubmed': break
         else:
             raise HTTP_BAD_REQUEST('publication has no PubMed xref')
         article = pubmed.Article(xref['xkey'])
         if not article.pmid:
             raise HTTP_BAD_REQUEST("no article with PMID %s" % pmid)
-        if self.publication['type'] != article.type or \
-           self.publication['published'] != article.published or \
-           self.publication['journal'] != article.journal:
-            with PublicationSaver(self.db, doc=self.publication) as doc:
-                doc['type'] = article.type
-                doc['published'] = article.published
-                doc['journal'] = article.journal
+        patch_publication(self.db, self.publication, article, log=False)
         self.set_redirect(request.application.get_url(self.publication['_id']))
 
 

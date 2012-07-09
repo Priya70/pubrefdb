@@ -4,6 +4,7 @@
 */
 function(doc) {
     if (doc.entitytype !== 'publication') return;
+    var xref;
     for (var i in doc.xrefs) {
 	xref = doc.xrefs[i];
 	emit([xref.xdb.toLowerCase(), xref.xkey], null);

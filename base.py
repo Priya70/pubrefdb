@@ -156,9 +156,9 @@ class MethodMixin(LoginMixin):
                 key = to_ascii(name).lower().replace(' ', '_')
                 links.append(dict(title="Principal Investigator: %s" % name,
                                   href=get_url('author', key)))
-        for item in self.db.view('publication/tags', group=True):
-            links.append(dict(title="Tags: %s" % item.key,
-                              href=get_url('tag', item.key)))
+        ## for item in self.db.view('publication/tags', group=True):
+        ##     links.append(dict(title="Tags: %s" % item.key,
+        ##                       href=get_url('tag', item.key)))
         links.append(dict(title='Recently modified',
                           href=get_url('modified')))
         links.append(dict(title='Journals',
