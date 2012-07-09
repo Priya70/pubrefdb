@@ -10,7 +10,7 @@ class Year(MethodMixin, GET):
     "List of publications during one year."
 
     outreprs = [JsonRepresentation,
-                TextRepresentation,
+                MedlineRepresentation,
                 AtomRepresentation,
                 PublicationsListHtmlRepresentation]
 

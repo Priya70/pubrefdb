@@ -4,6 +4,7 @@ Produce the documentation for the web resource API by introspection.
 """
 
 from wrapid.documentation import *
+from wrapid.text_representation import TextRepresentation
 
 from .base import *
 

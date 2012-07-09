@@ -10,7 +10,6 @@ class About(MethodMixin, GET):
     "About page, describing the system software."
 
     outreprs = [JsonRepresentation,
-                TextRepresentation,
                 HtmlRepresentation]
 
     def get_data_resource(self, request):

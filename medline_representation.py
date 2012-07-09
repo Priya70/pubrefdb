@@ -2,10 +2,24 @@
 
 MEDLINE text representation class for publication and publications list.
 
-XXX None for some values TA, PG: do not output
+XXX DP: Date of publication (with month 3-letter silliness)
+XXX FAU: full author name
 """
 
 from wrapid.text_representation import *
+
+MONTH = {1: 'Jan',
+         2: 'Feb',
+         3: 'Mar',
+         4: 'Apr',
+         5: 'May',
+         6: 'Jun',
+         7: 'Jul',
+         8: 'Aug',
+         9: 'Sep',
+         10: 'Oct',
+         11: 'Nov',
+         12: 'Dec'}
 
 
 class MedlineRepresentation(TextRepresentation):
@@ -25,67 +39,96 @@ class MedlineRepresentation(TextRepresentation):
         result = []
         for xref in publication.get('xrefs', []):
             if xref['xdb'] == 'pubmed':
-                result.append("PMID- %s" % xref['xkey'])
+                self.line(result, 'PMID', xref['xkey'])
                 break
         try:
-            result.append("TI  - %s" % self.multiline(publication['title']))
+            self.multiline(result, 'TI', publication['title'])
         except KeyError:
             pass
         try:
-            result.append("AB  - %s" % self.multiline(publication['abstract']))
+            self.multiline(result, 'AB', publication['abstract'])
         except KeyError:
             pass
         try:
-            result.append("AD  - %s" % self.multiline(publication['affiliation']))
+            self.multiline(result, 'AD', publication['affiliation'])
         except KeyError:
             pass
         for author in publication.get('authors', []):
             try:
-                result.append("AU  - %s %s" % (author['lastname_normalized'],
-                                               author['initials_normalized']))
+                name = "%s %s" % (author['lastname_normalized'],
+                                  author['initials_normalized'])
+                self.multiline(result, 'AU', name)
             except KeyError:
                 pass
-            # 'FAU': full name
         try:
-            result.append("PT  - %s" % publication['type'])
+            self.line(result, 'PT', publication['type'])
         except KeyError:
             pass
         journal = publication.get('journal', dict())
         try:
-            result.append("JT  - %s" % journal['title'])
+            self.line(result, 'JT', journal['title'])
         except KeyError:
             pass
         try:
-            result.append("TA  - %s" % journal['abbreviation'])
+            self.line(result, 'TA', journal['abbreviation'])
         except KeyError:
             pass
         try:
-            result.append("PG  - %s" % journal['pages'])
+            self.line(result, 'VI', journal['volume'])
         except KeyError:
             pass
         try:
-            result.append("IS  - %s" % journal['issn'])
+            self.line(result, 'IP', journal['issue'])
         except KeyError:
             pass
-        # XXX volume, issue, date of publication
+        try:
+            self.line(result, 'PG', journal['pages'])
+        except KeyError:
+            pass
+        try:
+            self.line(result, 'IS', journal['issn'])
+        except KeyError:
+            pass
+        try:
+            published = publication['published']
+            parts = published.split('-')
+            if not parts: raise KeyError
+        except KeyError:
+            pass
+        else:
+            published = parts[0]
+            try:
+                published += ' ' + MONTH[int(parts[1])]
+            except (IndexError, ValueError, KeyError):
+                pass
+            else:
+                try:
+                    published += ' ' + parts[2]
+                except IndexError:
+                    pass
+            self.line(result, 'DP', published)
         for xref in publication.get('xrefs', []):
             if xref['xdb'] == 'pubmed': continue
-            result.append("AID - %s [%s]" % (xref['xkey'], xref['xdb']))
+            self.line(result, 'AID', "%s [%s]" % (xref['xkey'], xref['xdb']))
         return rstr('\n'.join(result))
 
-    def multiline(self, text, maxlength=82):
-        result = []
+    def line(self, result, symbol, value):
+        if not value: return
+        result.append("%-4s- %s" % (symbol, value))
+
+    def multiline(self, result, symbol, value, maxlength=82):
+        lines = []
         line = []
         count = 0
-        for word in text.split():
+        for word in value.split():
             increment = len(word) + 1
             if count + increment > maxlength:
-                result.append(' '.join(line))
+                lines.append(' '.join(line))
                 line = []
                 count = 0
             else:
                 line.append(word)
                 count += increment
         if line:
-            result.append(' '.join(line))
-        return '\n      '.join(result)
+            lines.append(' '.join(line))
+        self.line(result, symbol, '\n      '.join(lines))

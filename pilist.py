@@ -11,7 +11,7 @@ class EditPiList(MethodMixin, GET):
     "Display edit page for PI list."
 
     outreprs = [JsonRepresentation,
-                TextRepresentation,
+                MedlineRepresentation,
                 FormHtmlRepresentation]
 
     fields = [MultiSelectField('remove', title='PIs',

@@ -12,7 +12,6 @@ from wrapid.file import File
 from .base import *
 from . import pubmed
 from .database import PublicationSaver
-from .medline_representation import MedlineRepresentation
 from .patch import patch_publication
 
 
@@ -123,7 +122,6 @@ class InputPublication(MethodMixin, GET):
     "Display input form for adding a publication."
 
     outreprs = [JsonRepresentation,
-                TextRepresentation,
                 FormHtmlRepresentation]
 
     fields = [StringField('title', title='Title',
@@ -242,7 +240,6 @@ class VerifyExcludePublication(EditMixin, MethodMixin, GET):
     "Verify that the publication is to be excluded."
 
     outreprs = [JsonRepresentation,
-                TextRepresentation,
                 FormHtmlRepresentation]
 
     fields = [CheckboxField('verify', title='Verify',
@@ -281,7 +278,6 @@ class EditPublication(EditMixin, MethodMixin, GET):
     "Display edit form for basic fields of a publication."
 
     outreprs = [JsonRepresentation,
-                TextRepresentation,
                 FormHtmlRepresentation]
 
     fields = InputPublication.fields + \
@@ -361,7 +357,6 @@ class EditPublicationXrefs(EditMixin, MethodMixin, GET):
     "Display edit form for the xrefs of a publication."
 
     outreprs = [JsonRepresentation,
-                TextRepresentation,
                 FormHtmlRepresentation]
 
     fields = [MultiSelectField('remove', title='Xrefs',
@@ -426,7 +421,6 @@ class EditPublicationHrefs(EditMixin, MethodMixin, GET):
     "Display edit form for the hrefs of a publication."
 
     outreprs = [JsonRepresentation,
-                TextRepresentation,
                 FormHtmlRepresentation]
 
     fields = [MultiSelectField('remove', title='Hrefs',
@@ -500,7 +494,6 @@ class EditPublicationTags(EditMixin, MethodMixin, GET):
     "Display edit form for the tags of a publication."
 
     outreprs = [JsonRepresentation,
-                TextRepresentation,
                 FormHtmlRepresentation]
 
     fields = [MultiSelectField('tags', title='Tags',
@@ -551,7 +544,6 @@ class EditPublicationSlug(EditMixin, MethodMixin, GET):
     "Display edit form for the slug of a publication."
 
     outreprs = [JsonRepresentation,
-                TextRepresentation,
                 FormHtmlRepresentation]
 
     fields = [StringField('slug', title='Slug',
@@ -641,7 +633,6 @@ class EditPublicationFile(EditMixin, MethodMixin, GET):
     "Display edit page for attaching or deleting a file for the publication. "
 
     outreprs = [JsonRepresentation,
-                TextRepresentation,
                 FormHtmlRepresentation]
 
     fields = [MultiSelectField('remove', title='Remove',
@@ -691,7 +682,6 @@ class InputPubmedPublication(MethodMixin, GET):
     "Display input page for importing publication from PubMed."
 
     outreprs = [JsonRepresentation,
-                TextRepresentation,
                 FormHtmlRepresentation]
 
     fields = [StringField('pmid', title='PubMed identifier',
@@ -768,7 +758,6 @@ class FetchedPubmedPublications(MethodMixin, GET):
     "Display results of most recent PubMed fetch."
 
     outreprs = [JsonRepresentation,
-                TextRepresentation,
                 FetchedHtmlRepresentation]
 
     def is_accessible(self):

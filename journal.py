@@ -25,7 +25,7 @@ class Journals(MethodMixin, GET):
     "Display list of journals in the database."
 
     outreprs = [JsonRepresentation,
-                TextRepresentation,
+                MedlineRepresentation,
                 JournalsHtmlRepresentation]
 
     def get_data_resource(self, request):

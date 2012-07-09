@@ -13,11 +13,11 @@ from wrapid.methods import *
 from wrapid.login import LoginMixin
 from wrapid.utils import to_ascii
 from wrapid.json_representation import JsonRepresentation
-from wrapid.text_representation import TextRepresentation
 
 from . import configuration
 from . import mimeutils
 from .html_representation import *
+from .medline_representation import *
 from .atom_representation import *
 
 

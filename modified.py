@@ -14,7 +14,7 @@ class Modified(MethodMixin, GET):
     fields = [IntegerField('limit')]
 
     outreprs = [JsonRepresentation,
-                TextRepresentation,
+                MedlineRepresentation,
                 AtomRepresentation,
                 PublicationsListHtmlRepresentation]
 

@@ -43,5 +43,7 @@ def patch_publication(db, doc, article, log):
 
 
 if __name__ == '__main__':
+    import os
+    import sys
     db = configuration.get_db()
-    patch(db)
+    patch(db, log=os.isatty(sys.stdin.fileno()))

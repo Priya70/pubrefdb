@@ -22,7 +22,7 @@ class Search(MethodMixin, GET):
     "Search for publications."
 
     outreprs = [JsonRepresentation,
-                TextRepresentation,
+                MedlineRepresentation,
                 AtomRepresentation,
                 SearchHtmlRepresentation]
 

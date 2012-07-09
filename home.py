@@ -10,7 +10,7 @@ class Home(MethodMixin, GET):
     "PubRefDb home page; list of most recent publications."
 
     outreprs = [JsonRepresentation,
-                TextRepresentation,
+                MedlineRepresentation,
                 AtomRepresentation,
                 PublicationsListHtmlRepresentation]
 

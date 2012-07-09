@@ -10,7 +10,7 @@ class Tag(MethodMixin, GET):
     "List of publications having a given tag."
 
     outreprs = [JsonRepresentation,
-                TextRepresentation,
+                MedlineRepresentation,
                 AtomRepresentation,
                 PublicationsListHtmlRepresentation]
 
