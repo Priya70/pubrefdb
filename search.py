@@ -3,6 +3,8 @@
 Search for publications.
 """
 
+import urllib
+
 from .base import *
 
 # Must be kept in sync with title.js
@@ -49,27 +51,28 @@ class Search(MethodMixin, GET):
 
     outreprs = [JsonRepresentation,
                 MedlineRepresentation,
-                AtomRepresentation,
                 SearchHtmlRepresentation]
 
     fields = [StringField('terms', length=40, title='Terms')]
 
-    def get_data_resource(self, request):
+    def prepare(self, request):
+        super(Search, self).prepare(request)
         values = self.parse_fields(request)
         try:
-            terms = values['terms']
-            if not terms: raise KeyError
-            terms = terms.strip()
-            if not terms: raise KeyError
-            terms = terms.split(',')
-            terms = [t.strip() for t in terms]
+            self.terms = values['terms']
+            if not self.terms: raise KeyError
+            self.terms = self.terms.strip()
+            if not self.terms: raise KeyError
+            self.terms = self.terms.split(',')
+            self.terms = [t.strip() for t in self.terms]
         except KeyError:
-            result = []
-            terms = []
-        result = self.search_xrefs(terms)
+            self.terms = []
+
+    def get_data_resource(self, request):
+        result = self.search_xrefs()
         if not result:
-            result = self.search_authors(terms)
-            title_result = self.search_title(terms)
+            result = self.search_authors()
+            title_result = self.search_title()
             if result:
                 if title_result:        # Limit authors by title words
                     result.intersection_update(title_result)
@@ -81,7 +84,7 @@ class Search(MethodMixin, GET):
         self.sort_publications(publications)
         for publication in publications:
             self.normalize_publication(publication, request.application.get_url)
-        override = dict(terms=dict(default=', '.join(terms)))
+        override = dict(terms=dict(default=', '.join(self.terms)))
         return dict(title='Publications search',
                     resource='Publication list search',
                     publications=publications,
@@ -90,11 +93,20 @@ class Search(MethodMixin, GET):
                               method='GET',
                               href=request.get_url()))
 
-    def search_xrefs(self, terms):
+    def get_data_outreprs(self, request):
+        "Return the outrepr links response data, adding query to URLs."
+        outreprs = super(Search, self).get_data_outreprs(request)
+        if self.terms:
+            terms = urllib.urlencode([('terms', ', '.join(self.terms))])
+            for outrepr in outreprs:
+                outrepr['href'] += '?' + terms
+        return outreprs
+
+    def search_xrefs(self):
         "Return union of all publications id's for xdb:xref terms."
         view = self.db.view('publication/xref')
         result = set()
-        for term in terms:
+        for term in self.terms:
             try:
                 xdb, xkey = term.split(':', 1)
             except ValueError:
@@ -104,11 +116,11 @@ class Search(MethodMixin, GET):
             result.update(set([i.id for i in items]))
         return result
 
-    def search_authors(self, terms):
+    def search_authors(self):
         "Return intersection of all publication id's for author names."
         view = self.db.view('publication/author')
         result = set()
-        for term in terms:
+        for term in self.terms:
             author = to_ascii(term)
             items = view[author : author+'Z']
             items = set([i.id for i in items])
@@ -119,11 +131,11 @@ class Search(MethodMixin, GET):
                     result = items
         return result
 
-    def search_title(self, terms):
+    def search_title(self):
         "Return intersection of all publication id's for title words."
         view = self.db.view('publication/title')
         result = set()
-        terms = [t.rstrip(RSTRIP) for t in terms]
+        terms = [t.rstrip(RSTRIP) for t in self.terms]
         terms = [t for t in terms if t not in IGNORE]
         if not terms: return result
         for term in terms:
