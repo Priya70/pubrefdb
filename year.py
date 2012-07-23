@@ -22,6 +22,6 @@ class Year(MethodMixin, GET):
         # Already sorted by the index
         for publication in publications:
             self.normalize_publication(publication, request.application.get_url)
-        return dict(title="Publications: %s" % year,
+        return dict(title="Year (all PIs): %s" % year,
                     resource='Publication list year',
                     publications=publications)

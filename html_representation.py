@@ -25,6 +25,9 @@ class HtmlRepresentation(BaseHtmlRepresentation):
                 break
         return head
 
+    def get_logo(self):
+        return A(SPAN('Publications'), href=self.data['application']['href'])
+
     def get_icon(self, name):
         return IMG(src=self.get_url('static', "%s.png" % name),
                    alt=name, title=name, width=16, height=16)
@@ -119,7 +122,12 @@ class PublicationsListMixin(object):
                           TR(TD(', '.join([str(i) for i in info]))))
             rows.append(TR(TD(table)))
         if count:
-            rows.insert(0, TD(I("%s publications" % len(rows))))
+            text = "%s publications." % len(rows)
+            try:
+                text += ' ' + self.data['caveat']
+            except KeyError:
+                pass
+            rows.insert(0, TD(I(text)))
         return TABLE(klass='publications', *rows)
 
 

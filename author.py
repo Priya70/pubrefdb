@@ -26,7 +26,15 @@ class Author(MethodMixin, GET):
         self.sort_publications(publications)
         for publication in publications:
             self.normalize_publication(publication, request.application.get_url)
-        name = ' '.join([s.capitalize() for s in author.split('_')])
-        return dict(title="Publications: %s" % name,
+        parts = author.split('_')
+        name = parts[0].capitalize()
+        for part in parts[1:]:
+            if len(part) > 2:
+                part = part.capitalize()
+            else:
+                part = part.upper()
+            name += ' ' + part
+        return dict(title="Author: %s" % name,
                     resource='Publication list author',
-                    publications=publications)
+                    publications=publications,
+                    caveat='Includes publications since 2010.')

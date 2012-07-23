@@ -85,7 +85,7 @@ class Search(MethodMixin, GET):
         for publication in publications:
             self.normalize_publication(publication, request.application.get_url)
         override = dict(terms=dict(default=', '.join(self.terms)))
-        return dict(title='Publications search',
+        return dict(title='Search',
                     resource='Publication list search',
                     publications=publications,
                     form=dict(fields=self.get_data_fields(override=override),

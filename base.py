@@ -161,7 +161,7 @@ class MethodMixin(LoginMixin):
         ##                       href=get_url('tag', item.key)))
         links.append(dict(title='Recently modified',
                           href=get_url('modified')))
-        links.append(dict(title='Incomplete data',
+        links.append(dict(title='Incomplete info',
                           href=get_url('incomplete')))
         links.append(dict(title='Journals',
                           href=get_url('journals')))

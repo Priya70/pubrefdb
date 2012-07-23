@@ -32,6 +32,6 @@ class Modified(MethodMixin, GET):
         # Already sorted by the index
         for publication in publications:
             self.normalize_publication(publication, request.application.get_url)
-        return dict(title="Publications: %s recently modified" % limit,
+        return dict(title="Recently modified",
                     resource='Publication list modified',
                     publications=publications)
