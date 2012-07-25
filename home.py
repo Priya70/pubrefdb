@@ -7,7 +7,7 @@ from .base import *
 
 
 class Home(MethodMixin, GET):
-    "PubRefDb home page; list of most recent publications."
+    "The most recent publications."
 
     outreprs = [JsonRepresentation,
                 MedlineRepresentation,
@@ -24,4 +24,5 @@ class Home(MethodMixin, GET):
             self.normalize_publication(publication, request.application.get_url)
         return dict(title='Most recent publications',
                     resource='Home',
-                    publications=publications)
+                    publications=publications,
+                    description=self.__doc__)

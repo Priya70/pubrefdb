@@ -8,7 +8,7 @@ from .medline_representation import MedlineRepresentation
 
 
 class Author(MethodMixin, GET):
-    "List of publications for one author."
+    "Publications involving the specified author."
 
     outreprs = [JsonRepresentation,
                 MedlineRepresentation,
@@ -34,7 +34,11 @@ class Author(MethodMixin, GET):
             else:
                 part = part.upper()
             name += ' ' + part
+        years = self.get_years().keys()
+        description = self.__doc__
+        description += """ NOTE: The list only includes publications
+        for the years %s-%s.""" % (min(years), max(years))
         return dict(title="Author: %s" % name,
                     resource='Publication list author',
                     publications=publications,
-                    caveat='Includes publications since 2010.')
+                    description=description)

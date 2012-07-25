@@ -7,7 +7,7 @@ from .base import *
 
 
 class Year(MethodMixin, GET):
-    "List of publications during one year."
+    "All publications for the given year."
 
     outreprs = [JsonRepresentation,
                 MedlineRepresentation,
@@ -24,4 +24,5 @@ class Year(MethodMixin, GET):
             self.normalize_publication(publication, request.application.get_url)
         return dict(title="Year (all PIs): %s" % year,
                     resource='Publication list year',
-                    publications=publications)
+                    publications=publications,
+                    description=self.__doc__)

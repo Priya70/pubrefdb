@@ -22,7 +22,7 @@ class JournalsHtmlRepresentation(HtmlRepresentation):
 
 
 class Journals(MethodMixin, GET):
-    "Display list of journals in the database."
+    "All journals in the database, with links to the publications."
 
     outreprs = [JsonRepresentation,
                 MedlineRepresentation,

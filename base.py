@@ -138,8 +138,7 @@ class MethodMixin(LoginMixin):
                               href=get_url('pubmed', 'import')))
             links.append(dict(title='Administration:PubMed fetched',
                               href=get_url('pubmed', 'fetched')))
-        view = self.db.view('publication/years', group=True)
-        years = dict([(int(r.key), r.value) for r in view])
+        years = self.get_years()
         for year in reversed(sorted(years.keys())):
             links.append(dict(title="Year (all PIs): %s" % year,
                               href=get_url('year', str(year)),
@@ -170,6 +169,13 @@ class MethodMixin(LoginMixin):
         links.append(dict(title='This application: API',
                           href=get_url('doc')))
         return links
+
+    def get_years(self):
+        """Get a dictionary where the keys are the publication years
+        and the values are the total number of publications for the year.
+        """
+        view = self.db.view('publication/years', group=True)
+        return dict([(int(r.key), r.value) for r in view])
 
     def get_docs(self, indexname, key, last=None, distinct=True, **kwargs):
         """Get the list of documents using the named index

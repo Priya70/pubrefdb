@@ -14,15 +14,17 @@ from pubrefdb.database import PublicationSaver
 
 
 def patch(db, delay=10.0, log=True):
-    """Loop through all incomplete publications having PubMed xref
-    and attempt to patch up missing bits of information:
+    """Loop through all publications lacking information.
+    Skip publications not having a PubMed xref.
+    Attempt to patch up the following missing bits of information:
     type of publication, published date and journal information.
     """
     view = db.view('publication/incomplete', include_docs=True)
     for item in view:
-        pmid = item.key
+        pmid = item.value
+        if not pmid: continue
         if log:
-            print 'Checking', pmid
+            print 'Checking PMID', pmid
         article = pubmed.Article(pmid)
         if article.pmid:
             patch_publication(db, item.doc, article, log=log)

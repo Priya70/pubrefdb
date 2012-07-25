@@ -7,7 +7,7 @@ from .base import *
 
 
 class Modified(MethodMixin, GET):
-    "List of publications recently modified."
+    "The publications whose entries have been modified most recently."
 
     DEFAULT_LIMIT = 20
 
@@ -34,4 +34,5 @@ class Modified(MethodMixin, GET):
             self.normalize_publication(publication, request.application.get_url)
         return dict(title="Recently modified",
                     resource='Publication list modified',
-                    publications=publications)
+                    publications=publications,
+                    description=self.__doc__)

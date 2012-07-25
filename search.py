@@ -47,7 +47,8 @@ class SearchHtmlRepresentation(FormHtmlMixin,
 
 
 class Search(MethodMixin, GET):
-    "Search for publications."
+    """The search terms may be cross-references to external databases,
+    PubMed identifers, author names, or title words."""
 
     outreprs = [JsonRepresentation,
                 MedlineRepresentation,
@@ -88,6 +89,7 @@ class Search(MethodMixin, GET):
         return dict(title='Search',
                     resource='Publication list search',
                     publications=publications,
+                    description=self.__doc__,
                     form=dict(fields=self.get_data_fields(override=override),
                               label='Search',
                               method='GET',

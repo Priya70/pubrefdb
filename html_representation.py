@@ -122,12 +122,14 @@ class PublicationsListMixin(object):
                           TR(TD(', '.join([str(i) for i in info]))))
             rows.append(TR(TD(table)))
         if count:
-            text = "%s publications." % len(rows)
-            try:
-                text += ' ' + self.data['caveat']
-            except KeyError:
-                pass
-            rows.insert(0, TD(I(text)))
+            descr = ["%s publications." % len(rows)]
+        else:
+            descr = []
+        description = self.data.get('description')
+        if description:
+            descr.append(description)
+        if descr:
+            rows.insert(0, TD(I(' '.join(descr))))
         return TABLE(klass='publications', *rows)
 
 
