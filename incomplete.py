@@ -7,7 +7,7 @@ from .base import *
 
 
 class Incomplete(MethodMixin, GET):
-    """The publications whose entries lack information about publication date,
+    """Publications whose entries lack information about publication date,
     publication month, type of publication, journal, volume or pages."""
 
     outreprs = [JsonRepresentation,
