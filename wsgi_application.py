@@ -142,10 +142,10 @@ application.add_resource('/login', name='Login',
                          GET=LoginAccount)
 
 # Documentation resources
-application.add_resource('/about',
+application.add_resource('/doc',
                          name='Documentation About',
                          GET=About)
-application.add_resource('/doc',
+application.add_resource('/doc/api',
                          name='Documentation API',
                          GET=ApiDocumentation)
 

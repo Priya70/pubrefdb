@@ -116,7 +116,7 @@ class MethodMixin(LoginMixin):
         return False
 
     def get_data_links(self, request):
-        "Return the links response data."
+        "Return the links data."
         get_url = request.application.get_url
         links = []
         if configuration.PARENT_URL:
@@ -164,11 +164,14 @@ class MethodMixin(LoginMixin):
                           href=get_url('incomplete')))
         links.append(dict(title='Journals',
                           href=get_url('journals')))
-        links.append(dict(title='This application: About',
-                          href=get_url('about')))
-        links.append(dict(title='This application: API',
-                          href=get_url('doc')))
         return links
+
+    def get_data_documentation(self, request):
+        get_url = request.application.get_url
+        return [dict(title='About',
+                     href=get_url('doc')),
+                dict(title='API',
+                     href=get_url('doc/api'))]
 
     def get_years(self):
         """Get a dictionary where the keys are the publication years
