@@ -24,5 +24,4 @@ class Home(MethodMixin, GET):
             self.normalize_publication(publication, request.application.get_url)
         return dict(title='Most recent publications',
                     resource='Home',
-                    publications=publications,
-                    description=self.__doc__)
+                    publications=publications)

@@ -22,4 +22,4 @@ class Incomplete(MethodMixin, GET):
         return dict(title='Incomplete information',
                     resource='Publication incomplete',
                     publications=publications,
-                    description=self.__doc__)
+                    descr=self.__doc__)

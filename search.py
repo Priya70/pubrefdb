@@ -38,17 +38,24 @@ class SearchHtmlRepresentation(FormHtmlMixin,
                                PublicationsListMixin,
                                HtmlRepresentation):
 
-    def get_search(self):
-        return ''
-
+    def get_descr(self):
+        descr = super(SearchHtmlRepresentation, self).get_descr()
+        descr += str(self.get_form())
+        descr += str(P("%i publications." % len(self.data['publications'])))
+        return descr
+                   
     def get_content(self):
-        return DIV(self.get_form(),
-                   self.get_publications_list())
+        return self.get_publications_list()
+
+    def get_search(self):
+        "The search form field is located at the top of the content panel."
+        return ''
 
 
 class Search(MethodMixin, GET):
     """The search terms may be cross-references to external databases,
-    PubMed identifers, author names, or title words."""
+    PubMed identifers, author names, title words or journal name abbreviation.
+    """
 
     outreprs = [JsonRepresentation,
                 MedlineRepresentation,
@@ -64,8 +71,7 @@ class Search(MethodMixin, GET):
             if not self.terms: raise KeyError
             self.terms = self.terms.strip()
             if not self.terms: raise KeyError
-            self.terms = self.terms.split(',')
-            self.terms = [t.strip() for t in self.terms]
+            self.terms = [t.strip() for t in self.terms.split(',')]
         except KeyError:
             self.terms = []
 
@@ -79,6 +85,12 @@ class Search(MethodMixin, GET):
                     result.intersection_update(title_result)
             else:
                 result = title_result
+            journal_result = self.search_journal()
+            if result:
+                if journal_result:      # Limit authors by journal name
+                    result.intersection_update(journal_result)
+            else:
+                result = journal_result
         if len(result) == 1:
             raise HTTP_SEE_OTHER(Location=request.application.get_url(result.pop()))
         publications = [self.db[i] for i in result]
@@ -89,7 +101,7 @@ class Search(MethodMixin, GET):
         return dict(title='Search',
                     resource='Publication list search',
                     publications=publications,
-                    description=self.__doc__,
+                    descr=self.__doc__,
                     form=dict(fields=self.get_data_fields(override=override),
                               label='Search',
                               method='GET',
@@ -142,6 +154,19 @@ class Search(MethodMixin, GET):
         if not terms: return result
         for term in terms:
             items = view[term : term+'Z']
+            items = set([i.id for i in items])
+            if len(items) > 0:
+                if result:
+                    result.intersection_update(items)
+                else:
+                    result = items
+        return result
+
+    def search_journal(self):
+        view = self.db.view('publication/journal')
+        result = set()
+        for term in self.terms:
+            items = view[term]
             items = set([i.id for i in items])
             if len(items) > 0:
                 if result:

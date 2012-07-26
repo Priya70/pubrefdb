@@ -94,7 +94,7 @@ class HtmlRepresentation(BaseHtmlRepresentation):
 class PublicationsListMixin(object):
     "Mixin to display list of publications."
 
-    def get_publications_list(self, count=True):
+    def get_publications_list(self):
         rows = []
         for publication in self.data['publications']:
             info = []
@@ -121,21 +121,17 @@ class PublicationsListMixin(object):
                           TR(TD(self.format_authors(publication['authors']))),
                           TR(TD(', '.join([str(i) for i in info]))))
             rows.append(TR(TD(table)))
-        if count:
-            descr = ["%s publications." % len(rows)]
-        else:
-            descr = []
-        description = self.data.get('description')
-        if description:
-            descr.append(description)
-        if descr:
-            rows.insert(0, TD(I(' '.join(descr))))
         return TABLE(klass='publications', *rows)
 
 
 class PublicationsListHtmlRepresentation(PublicationsListMixin,
                                          HtmlRepresentation):
     "Display a list of publications."
+
+    def get_descr(self):
+        descr = super(PublicationsListHtmlRepresentation, self).get_descr()
+        descr += str(P("%i publications." % len(self.data['publications'])))
+        return descr
 
     def get_content(self):
         return self.get_publications_list()

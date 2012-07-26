@@ -35,4 +35,4 @@ class Modified(MethodMixin, GET):
         return dict(title="Recently modified",
                     resource='Publication list modified',
                     publications=publications,
-                    description=self.__doc__)
+                    descr=self.__doc__)

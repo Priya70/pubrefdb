@@ -35,10 +35,10 @@ class Author(MethodMixin, GET):
                 part = part.upper()
             name += ' ' + part
         years = self.get_years().keys()
-        description = self.__doc__
-        description += """ NOTE: The list only includes publications
+        descr = self.__doc__
+        descr += """ NOTE: The list only includes publications
         for the years %s-%s.""" % (min(years), max(years))
         return dict(title="Author: %s" % name,
                     resource='Publication list author',
                     publications=publications,
-                    description=description)
+                    descr=descr)

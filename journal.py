@@ -37,4 +37,5 @@ class Journals(MethodMixin, GET):
                                                             terms=item.key))
             journals.append(journal)
         return dict(title='Journals and number of publications',
-                    journals=journals)
+                    journals=journals,
+                    descr=self.__doc__)
