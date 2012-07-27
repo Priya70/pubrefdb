@@ -7,7 +7,9 @@ from .base import *
 
 
 class Home(MethodMixin, GET):
-    "The most recent publications."
+    "The 10 most recent publications."
+
+    MOST_RECENT_LIMIT = 10
 
     outreprs = [JsonRepresentation,
                 MedlineRepresentation,
@@ -18,10 +20,11 @@ class Home(MethodMixin, GET):
         publications = self.get_docs('publication/published',
                                      '9999', last='0',
                                      descending=True,
-                                     limit=configuration.MOST_RECENT_LIMIT)
+                                     limit=self.MOST_RECENT_LIMIT)
         # Already sorted by the index
         for publication in publications:
             self.normalize_publication(publication, request.application.get_url)
-        return dict(title='Most recent publications',
+        return dict(title='PubRefDb: Publications database',
                     resource='Home',
-                    publications=publications)
+                    publications=publications,
+                    descr=self.__doc__)

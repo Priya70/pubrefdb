@@ -12,7 +12,7 @@ class Year(MethodMixin, GET):
     outreprs = [JsonRepresentation,
                 MedlineRepresentation,
                 AtomRepresentation,
-                PublicationsListHtmlRepresentation]
+                PublicationsListCountHtmlRepresentation]
 
     def get_data_resource(self, request):
         year = request.variables['year']

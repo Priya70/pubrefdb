@@ -27,8 +27,6 @@ COUCHDB_DATABASE = 'pubrefdb'
 
 DATA_DIR = '/var/local/pubrefdb'
 
-MOST_RECENT_LIMIT = 20            # Number of most recent publications.
-
 DATE_FORMAT     = '%Y-%m-%d'
 DAY_FORMAT      = '%A %d %B %Y'
 DATETIME_FORMAT = '%Y-%m-%d %H:%M'

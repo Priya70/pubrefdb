@@ -13,7 +13,7 @@ class Author(MethodMixin, GET):
     outreprs = [JsonRepresentation,
                 MedlineRepresentation,
                 AtomRepresentation,
-                PublicationsListHtmlRepresentation]
+                PublicationsListCountHtmlRepresentation]
 
     def get_data_resource(self, request):
         author = request.variables['author']

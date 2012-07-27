@@ -48,7 +48,7 @@ class SearchHtmlRepresentation(FormHtmlMixin,
         return self.get_publications_list()
 
     def get_search(self):
-        "The search form field is located at the top of the content panel."
+        "Do not show the standard search form field in the upper right panel."
         return ''
 
 

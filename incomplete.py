@@ -13,7 +13,7 @@ class Incomplete(MethodMixin, GET):
     outreprs = [JsonRepresentation,
                 MedlineRepresentation,
                 AtomRepresentation,
-                PublicationsListHtmlRepresentation]
+                PublicationsListCountHtmlRepresentation]
 
     def get_data_resource(self, request):
         publications = self.get_docs('publication/incomplete', None)

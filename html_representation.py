@@ -25,9 +25,6 @@ class HtmlRepresentation(BaseHtmlRepresentation):
                 break
         return head
 
-    def get_logo(self):
-        return A(SPAN('Publications'), href=self.data['application']['href'])
-
     def get_icon(self, name):
         return IMG(src=self.get_url('static', "%s.png" % name),
                    alt=name, title=name, width=16, height=16)
@@ -128,13 +125,17 @@ class PublicationsListHtmlRepresentation(PublicationsListMixin,
                                          HtmlRepresentation):
     "Display a list of publications."
 
-    def get_descr(self):
-        descr = super(PublicationsListHtmlRepresentation, self).get_descr()
-        descr += str(P("%i publications." % len(self.data['publications'])))
-        return descr
-
     def get_content(self):
         return self.get_publications_list()
+
+
+class PublicationsListCountHtmlRepresentation(PublicationsListHtmlRepresentation):
+    "Display a list of publications, with count."
+
+    def get_descr(self):
+        descr = super(PublicationsListCountHtmlRepresentation, self).get_descr()
+        descr += str(P("%i publications." % len(self.data['publications'])))
+        return descr
 
 
 class FormHtmlRepresentation(FormHtmlMixin, HtmlRepresentation):
