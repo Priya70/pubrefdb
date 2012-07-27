@@ -220,9 +220,13 @@ class MethodMixin(LoginMixin):
             author['href'] = get_url('author', name)
         return publication
 
-    def sort_publications(self, publications):
+    def sort_publications(self, publications, reverse=False):
         "Sort publications by published data, descending."
-        publications.sort(lambda i, j: cmp(i['published'], j['published']))
+        if reverse:
+            func = lambda i, j: cmp(j['published'], i['published'])
+        else:
+            func = lambda i, j: cmp(i['published'], j['published'])
+        publications.sort(func)
         publications.reverse()
 
     def get_publication_files(self, iui, get_url):

@@ -17,6 +17,7 @@ class Incomplete(MethodMixin, GET):
 
     def get_data_resource(self, request):
         publications = self.get_docs('publication/incomplete', None)
+        self.sort_publications(publications, reverse=True)
         for publication in publications:
             self.normalize_publication(publication, request.application.get_url)
         return dict(title='Incomplete information',
