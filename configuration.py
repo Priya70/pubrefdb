@@ -46,7 +46,8 @@ MIMETYPE_ICONS = {'application/pdf': 'pdf',
                   'image/png': 'image',
                   'image/gif': 'image',
                   'image/jpeg': 'image',
-                  'application/octet-stream': 'bin'}
+                  'application/octet-stream': 'bin',
+                  'application/zip': 'zip'}
 
 # Fallback user account interface; should be overriden by proper implementation
 import fallback_users as users

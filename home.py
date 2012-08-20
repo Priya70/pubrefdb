@@ -24,7 +24,7 @@ class Home(MethodMixin, GET):
         # Already sorted by the index
         for publication in publications:
             self.normalize_publication(publication, request.application.get_url)
-        return dict(title='PubRefDb: Publications database',
+        return dict(title='Publication Reference Database',
                     resource='Home',
                     publications=publications,
                     descr=self.__doc__)
