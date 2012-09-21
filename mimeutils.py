@@ -29,15 +29,22 @@ DEFINED_EXTENSIONS = {'text/plain':               '.txt',  # Else '.ksh'
                       'application/docbook+xml':  '.xml',
                       'application/atom+xml':     '.atom',
                       'application/json':         '.json',
+                      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': '.docx',
+                      'application/vnd.openxmlformats-officedocument.presentationml.presentation': '.pptx',
+                      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': '.xlsx',
                       'image/vnd.microsoft.icon': '.ico',
                       'image/jpeg':               '.jpg',  # Else '.jpe'
+                      'application/x-tar':        '.tar',
                       'application/x-fasta':      '.fasta',
                       'text/x-rst':               '.rst',
                       'text/x-sql':               '.sql',
                       'text/x-log':               '.log',
+                      'text/x-csrc':              '.c',
+                      'text/x-c++src':            '.cpp',
                       'application/x-gdbm':       '.gdb',
                       'application/x-sqlite3':    '.db3',
                       'application/x-hdf5':       '.h5',
+                      'application/x-python':     '.py',
                       'text/x-templyte-html':     '.thtml'}
 
 # The inverse of the above
@@ -75,6 +82,9 @@ XML_MIMETYPES = set(['text/xml',
                      'application/docbook+xml',
                      'application/atom+xml',
                      'application/rdf+xml',
+                     'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                     'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+                     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
                      'image/svg+xml'])
 
 IMAGE_MIMETYPES = set(['image/jpeg',

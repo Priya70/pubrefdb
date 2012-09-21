@@ -230,10 +230,12 @@ class MethodMixin(LoginMixin):
         publications.reverse()
 
     def get_publication_files(self, iui, get_url):
+        "Get the name, size and URL for all files attached to the publication."
         datadir = os.path.join(configuration.DATA_DIR, iui)
         result = []
         pos = len(datadir) + 1
         for dirpath, dirnames, filenames in os.walk(datadir):
+            filenames.sort()
             for filename in filenames:
                 filepath = os.path.join(dirpath, filename)
                 result.append(dict(filename=filepath[pos:],

@@ -40,14 +40,18 @@ MIMETYPE_ICONS = {'application/pdf': 'pdf',
                   'application/vnd.ms-powerpoint': 'ppt',
                   'application/vnd.openxmlformats-officedocument.presentationml.presentation': 'ppt',
                   'application/vnd.ms-excel': 'excel',
-                  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'xls',
+                  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'excel',
                   'text/plain': 'txt',
                   'text/csv': 'csv',
+                  'text/x-csrc': 'c',
+                  'text/x-c++src': 'cplusplus',
                   'image/png': 'image',
                   'image/gif': 'image',
                   'image/jpeg': 'image',
                   'application/octet-stream': 'bin',
-                  'application/zip': 'zip'}
+                  'application/zip': 'zip',
+                  'application/x-python': 'python',
+                  'application/x-tar': 'tar',}
 
 # Fallback user account interface; should be overriden by proper implementation
 import fallback_users as users

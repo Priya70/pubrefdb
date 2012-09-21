@@ -33,9 +33,8 @@ class HtmlRepresentation(BaseHtmlRepresentation):
         try:
             filename = configuration.MIMETYPE_ICONS[mimetype]
         except KeyError:
-            return ''
-        else:
-            return self.get_icon(filename)
+            filename = 'document'
+        return self.get_icon(filename)
 
     def format_authors(self, authors):
         from .base import get_author_name
