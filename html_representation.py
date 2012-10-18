@@ -36,8 +36,9 @@ class HtmlRepresentation(BaseHtmlRepresentation):
             filename = 'document'
         return self.get_icon(filename)
 
-    def format_authors(self, authors):
+    def format_authors(self, doc):
         from .base import get_author_name
+        authors = doc.get('authors')
         if not authors: return '-'
         result = []
         for author in authors:
@@ -50,15 +51,23 @@ class HtmlRepresentation(BaseHtmlRepresentation):
                 result.append(str(A(self.safe(name), href=url)))
         return ', '.join(result)
 
-    def format_journal(self, journal):
+    def format_journal(self, doc):
+        """Format journal volume, issue and pages.
+        Handle special case of conference proceedings.
+        """
+        journal = doc.get('journal')
         if not journal: return '-'
-        title = self.safe(journal['abbreviation'] or journal['title'])
-        volume = self.safe(journal['volume'] or '-')
-        issue = self.safe(journal['issue'] or '-')
-        pages = self.safe(journal['pages'] or '-')
-        return "%s, %s (%s) %s" % (title, B(volume), issue, pages)
+        parts = [self.safe(journal['abbreviation'] or journal['title']),
+                 str(B(self.safe(journal['volume'] or '-')))]
+        type = doc.get('type')
+        if type == 'journal article':
+            parts.append("(%s)" % self.safe(journal['issue'] or '-'))
+        if type != 'conference proceedings':
+            parts.append(self.safe(journal['pages'] or '-'))
+        return ' '.join(parts)
 
-    def format_tags(self, tags):
+    def format_tags(self, doc):
+        tags = doc.get('tags')
         if not tags: return '-'
         return self.safe(', '.join(tags))
 
@@ -93,10 +102,7 @@ class PublicationsListMixin(object):
     def get_publications_list(self):
         rows = []
         for publication in self.data['publications']:
-            info = []
-            journal = publication.get('journal')
-            if journal:
-                info.append(self.format_journal(journal))
+            info = [self.format_journal(publication)]
             published = publication.get('published')
             if published:
                 info.append(published)
@@ -114,7 +120,7 @@ class PublicationsListMixin(object):
                                   ' ',
                                   self.safe(publication['title']),
                                   href=publication['href']))),
-                          TR(TD(self.format_authors(publication['authors']))),
+                          TR(TD(self.format_authors(publication))),
                           TR(TD(', '.join([str(i) for i in info]))))
             rows.append(TR(TD(table)))
         return TABLE(klass='publications', *rows)

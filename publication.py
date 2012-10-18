@@ -20,11 +20,11 @@ class PublicationHtmlRepresentation(HtmlRepresentation):
 
     def get_content(self):
         table = TABLE(TR(TH('Authors'),
-                         TD(self.format_authors(self.data['authors']))),
+                         TD(self.format_authors(self.data))),
                       TR(TH('Type'),
                          TD(self.safe(self.data.get('type')))),
                       TR(TH('Journal'),
-                         TD(self.format_journal(self.data.get('journal')))),
+                         TD(self.format_journal(self.data))),
                       TR(TH('Published'),
                          TD(self.safe(self.data.get('published') or '-'))),
                       TR(TH('Affiliation'),
@@ -34,7 +34,7 @@ class PublicationHtmlRepresentation(HtmlRepresentation):
                       TR(TH('Comment'),
                          TD(self.safe(self.data.get('comment') or '-'))),
                       TR(TH('Tags'),
-                         TD(self.format_tags(self.data.get('tags')))),
+                         TD(self.format_tags(self.data))),
                       klass='publication')
         url = self.data.get('alt_href')
         if url:
@@ -135,13 +135,13 @@ class InputPublication(MethodMixin, GET):
                           descr='Publication type.'),
               StringField('journal_title', title='Journal title',
                           length=40,
-                          descr='Full title of journal.'),
+                          descr='Full title of journal, or name of conference.'),
               StringField('journal_abbrev', title='Abbrev title',
                           length=20,
                           descr='Abbreviated title of journal.'),
               StringField('journal_volume', title='Volume',
                           length=8,
-                          descr='Journal volume.'),
+                          descr='Journal volume, or conference number or year.'),
               StringField('journal_issue', title='Issue',
                           length=8,
                           descr='Journal issue.'),

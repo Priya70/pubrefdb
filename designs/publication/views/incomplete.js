@@ -4,8 +4,8 @@
    - Published month.
    - Type of publication.
    - Journal.
-   - Volume.
-   - Pages.
+   - Volume
+   - Pages (ignored for 'conference proceedings')
    Published day and journal issue is not checked, and may be undefined.
 */
 function(doc) {
@@ -40,7 +40,7 @@ function(doc) {
 	emit(doc._id, pmid);
 	return;
     }
-    if (!journal.pages) {
+    if (doc.type !== 'conference proceedings' && !journal.pages) {
 	emit(doc._id, pmid);
 	return;
     }
