@@ -60,9 +60,8 @@ class HtmlRepresentation(BaseHtmlRepresentation):
         parts = [self.safe(journal['abbreviation'] or journal['title']),
                  str(B(self.safe(journal['volume'] or '-')))]
         type = doc.get('type')
-        if type == 'journal article':
-            parts.append("(%s)" % self.safe(journal['issue'] or '-'))
         if type != 'conference proceedings':
+            parts.append("(%s)" % self.safe(journal['issue'] or '-'))
             parts.append(self.safe(journal['pages'] or '-'))
         return ' '.join(parts)
 
