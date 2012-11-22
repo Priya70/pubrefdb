@@ -147,12 +147,15 @@ class Article(object):
                 result['issue'] = issue=issue.findtext('Issue')
         element = article.find('Pagination/MedlinePgn')
         if element is not None:
-            pages = element.text.split('-')
-            if len(pages) == 2:         # Complete page numbers!
-                diff = len(pages[0]) - len(pages[1])
-                if diff > 0:
-                    pages[1] = pages[0][0:diff] + pages[1]
-            result['pages'] = '-'.join(pages)
+            pages = element.text
+            if pages:
+                pages = pages.split('-')
+                if len(pages) == 2:         # Complete page numbers!
+                    diff = len(pages[0]) - len(pages[1])
+                    if diff > 0:
+                        pages[1] = pages[0][0:diff] + pages[1]
+                pages = '-'.join(pages)
+            result['pages'] = pages
         return result
 
     def get_type(self, article):
