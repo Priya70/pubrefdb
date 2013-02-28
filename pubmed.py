@@ -275,13 +275,13 @@ def test2():
 
 
 if __name__ == '__main__':
-    url = PUBMED_FETCH_URL % '20393554'
-    infile = urllib.urlopen(url)
-    data = infile.read()
-    open('data/hudson_2010.xml', 'w').write(data)
-    ## import json
-    ## root = xml.etree.ElementTree.fromstring(open('data/borgstrom_2011.xml').read())
-    ## article = Article()
-    ## article.parse(root.find('PubmedArticle'))
-    ## ## article=Article(pmid='11751858')
-    ## print json.dumps(article.get_data(), indent=2)
+    ## url = PUBMED_FETCH_URL % '22635093'
+    ## infile = urllib.urlopen(url)
+    ## data = infile.read()
+    ## open('data/melkersson_2012.xml', 'w').write(data)
+    import json
+    root = xml.etree.ElementTree.fromstring(open('data/melkersson_2012.xml').read())
+    article = Article()
+    article.parse(root.find('PubmedArticle'))
+    ## article=Article(pmid='11751858')
+    print json.dumps(article.get_data(), indent=2)
