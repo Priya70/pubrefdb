@@ -34,10 +34,9 @@ class Author(MethodMixin, GET):
             else:
                 part = part.upper()
             name += ' ' + part
-        years = self.get_years().keys()
         descr = self.__doc__
-        descr += """ NOTE: The list only includes publications
-        for the years %s-%s.""" % (min(years), max(years))
+        descr += "\n\n**NOTE**: The list only includes publications for the" \
+                 " years the author was associated with SciLifeLab."
         return dict(title="Author: %s" % name,
                     resource='Publication list author',
                     publications=publications,
