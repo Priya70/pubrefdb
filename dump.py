@@ -20,7 +20,8 @@ def dump(db, outfile):
 
 if __name__ == '__main__':
     import os
-    filepath = os.path.join('dumps', "dump_%s.json" % configuration.get_date())
+    dirpath = os.path.join(os.path.dirname(__file__), 'dumps')
+    filepath = os.path.join(dirpath, "dump_%s.json" % configuration.get_date())
     outfile = open(filepath, 'wb')
     dump(configuration.get_db(), outfile)
     outfile.close()
