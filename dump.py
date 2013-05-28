@@ -20,7 +20,7 @@ def dump(db, outfile):
 
 if __name__ == '__main__':
     import os
-    dirpath = os.path.join(os.path.dirname(__file__), 'dumps')
+    dirpath = os.path.expanduser('~/dumps/pubrefdb')
     filepath = os.path.join(dirpath, "dump_%s.json" % configuration.get_date())
     outfile = open(filepath, 'wb')
     dump(configuration.get_db(), outfile)
