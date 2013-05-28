@@ -19,6 +19,8 @@ def dump(db, outfile):
 
 
 if __name__ == '__main__':
-    outfile = open('dump.json', 'wb')
+    import os
+    filepath = os.path.join('dumps', "dump_%s.json" % configuration.get_date())
+    outfile = open(filepath, 'wb')
     dump(configuration.get_db(), outfile)
     outfile.close()
